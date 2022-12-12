@@ -28,7 +28,7 @@ class Hero(pygame.sprite.Sprite):
                            "run": list(), "fall": list()}
 
         for condition in self.animations:
-            self.animations[condition] = load_images("graphics/character/" + condition + '/')
+            self.animations[condition] = load_images("../graphics/character/" + condition + '/')
 
     def move_x(self):
         keys = pygame.key.get_pressed()
@@ -65,9 +65,7 @@ class Hero(pygame.sprite.Sprite):
         self.get_status()
         animation = self.animations[self.status]
 
-        self.image_index += self.animation_speed
-        if self.image_index >= len(animation):
-            self.image_index = 0
+        self.image_index = (self.image_index + self.animation_speed) % len(animation)
 
         image = animation[int(self.image_index)]
         if self.facing_right:

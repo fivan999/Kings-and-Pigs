@@ -2,16 +2,17 @@ import sys
 import pygame
 from settings import *
 from level import Level
+from game_data import level_1
 
 
 def main():
     pygame.init()
-    pygame.display.set_caption("The Bebra Game")
+    pygame.display.set_caption("Kings & Pigs")
 
     screen = pygame.display.set_mode(SCREEN_SIZE)
 
     clock = pygame.time.Clock()
-    level = Level(level_map, screen)
+    level = Level(level_1, screen)
 
     running = True
     while running:
