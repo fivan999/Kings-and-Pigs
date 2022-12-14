@@ -4,9 +4,9 @@ from support import load_images
 
 
 class Tile(pygame.sprite.Sprite):
-    def __init__(self, position):
+    def __init__(self, position, tile_size=1):
         super().__init__()
-        self.image = pygame.Surface((1, 1))
+        self.image = pygame.Surface((tile_size, tile_size))
         self.rect = self.image.get_rect(topleft=position)
 
     def update(self, delta_x=0):
@@ -44,8 +44,6 @@ class AnimatedTile(Tile):
         self.image_index = 0
         self.animation_speed = 0.15
         self.image = self.images[self.image_index]
-        self.rect.x += TILE_SIZE // 2 - self.image.get_width() // 2
-        self.rect.y += TILE_SIZE // 2 - self.image.get_height() // 2
 
     def animate(self):
         self.image_index = (self.image_index + self.animation_speed) % len(self.images)
@@ -54,3 +52,10 @@ class AnimatedTile(Tile):
     def update(self, delta_x=0):
         super().update(delta_x)
         self.animate()
+
+
+class Diamond(AnimatedTile):
+    def __init__(self, position, path):
+        super().__init__(position, path)
+        self.rect.x += TILE_SIZE // 2 - self.image.get_width() // 2
+        self.rect.y += TILE_SIZE // 2 - self.image.get_height() // 2
