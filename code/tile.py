@@ -1,4 +1,5 @@
 import pygame
+from settings import TILE_SIZE
 
 
 class Tile(pygame.sprite.Sprite):
@@ -11,7 +12,21 @@ class Tile(pygame.sprite.Sprite):
         self.rect.x += delta_x
 
 
-class StaticTIle(Tile):
+class StaticTile(Tile):
     def __init__(self, position, surface):
         super().__init__(position)
         self.image = surface
+
+
+class Box(StaticTile):
+    path = "../graphics/decorations/box.png"
+
+    def __init__(self, position):
+        super().__init__(position, pygame.image.load(self.path))
+        self.rect.y += TILE_SIZE - self.image.get_height()
+
+
+class Platform(StaticTile):
+    def __init__(self, position, surface):
+        super().__init__(position, surface)
+        self.image = pygame.Surface(self.image, pygame.SRCALPHA)
