@@ -48,6 +48,7 @@ class Level:
     def create_tile_group(self, csv_data, graphics_type):
         sprite_group = pygame.sprite.Group()
         tiles = self.define_tile_type(graphics_type)
+        print(csv_data, graphics_type)
 
         for row_ind, row in enumerate(csv_data):
             for col_ind, col in enumerate(row):
@@ -55,6 +56,7 @@ class Level:
                     continue
                 x, y = col_ind * TILE_SIZE, row_ind * TILE_SIZE
                 if graphics_type == "box":
+                    print(True)
                     sprite_group.add(Box((x, y)))
                 elif graphics_type == "diamonds":
                     sprite_group.add(Diamond((x, y), "../graphics/stuff/animate_diamonds/"))
@@ -88,9 +90,6 @@ class Level:
         self.terrain_sprites.update(self.world_shift)
         self.terrain_sprites.draw(self.screen)
 
-        self.box_sprites.update(self.world_shift)
-        self.box_sprites.draw(self.screen)
-
         self.diamond_sprites.update(self.world_shift)
         self.diamond_sprites.draw(self.screen)
 
@@ -107,5 +106,8 @@ class Level:
         self.enemy_collision()
         self.enemies_sprites.draw(self.screen)
 
-        # self.enemy_block.update(self.world_shift)
-        # self.enemy_block.draw(self.screen)
+        self.enemy_block.update(self.world_shift)
+        self.enemy_block.draw(self.screen)
+
+        self.box_sprites.update(self.world_shift)
+        self.box_sprites.draw(self.screen)

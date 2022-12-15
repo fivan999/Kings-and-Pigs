@@ -25,6 +25,7 @@ class Box(StaticTile):
     def __init__(self, position):
         super().__init__(position, pygame.image.load(self.path).convert_alpha())
         self.rect.y += TILE_SIZE - self.image.get_height()
+        self.rect.x += TILE_SIZE - self.image.get_width()
 
 
 class Door(StaticTile):
