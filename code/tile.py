@@ -17,6 +17,7 @@ class StaticTile(Tile):
     def __init__(self, position, surface):
         super().__init__(position)
         self.image = surface
+        self.rect = self.image.get_rect(topleft=position)
 
 
 class Box(StaticTile):
