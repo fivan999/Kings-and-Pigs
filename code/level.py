@@ -136,9 +136,11 @@ class Level:
                 if hero.direction.y > 0:
                     hero.rect.bottom = tile.rect.top
                     hero.on_ground = True
+                    hero.on_ceiling = False
                 elif hero.direction.y < 0:
                     hero.rect.top = tile.rect.bottom
                     hero.on_ceiling = True
+                    hero.on_ground = False
                 hero.direction.y = 0
 
         if hero.on_ground and hero.direction.y < 0 or hero.direction.y > 1:
