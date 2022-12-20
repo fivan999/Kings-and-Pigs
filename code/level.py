@@ -5,12 +5,17 @@ from hero import Hero
 from settings import SCREEN_SIZE
 from support import *
 from enemy import *
+from camera import Camera
 
 
 class Level:
     def __init__(self, level, screen):
         self.screen = screen
+        self.camera = Camera()
+        self.setup_level(level)
+        self.cur_x = None
 
+    def setup_level(self, level):
         self.hero = pygame.sprite.GroupSingle()
         self.create_tile_group(import_csv(level["hero"]), "hero")
 
@@ -33,8 +38,11 @@ class Level:
         self.enemies_sprites = self.create_tile_group(import_csv(level["pigs"]),
                                                       "pigs")
 
-        self.world_shift = 0
-        self.cur_x = None
+    def get_all_sprites(self):
+        return self.hero.sprites() + self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
+               self.decoration_sprites.sprites() + self.box_sprites.sprites() + self.diamond_sprites.sprites() + \
+               self.platform_sprites.sprites() + self.backgroud_door_sprite.sprites() + \
+               self.active_door_sprite.sprites() + self.enemy_block.sprites() + self.enemies_sprites.sprites()
 
     @staticmethod
     def define_tile_type(graphics_type):
@@ -59,21 +67,28 @@ class Level:
                     continue
                 x, y = col_ind * TILE_SIZE, row_ind * TILE_SIZE
                 if graphics_type == "hero":
-                    self.hero.add(Hero((x, y)))
+                    tile = Hero((x, y))
+                    self.hero.add(tile)
                     return
                 elif graphics_type == "box":
-                    sprite_group.add(Box((x, y)))
+                    tile = Box((x, y))
+                    sprite_group.add(tile)
                 elif graphics_type == "diamonds":
-                    sprite_group.add(Diamond((x, y), "../graphics/stuff/animate_diamonds/"))
+                    tile = Diamond((x, y), "../graphics/stuff/animate_diamonds/")
+                    sprite_group.add(tile)
                 elif graphics_type == "background_door":
-                    sprite_group.add(Door((x, y), False))
+                    tile = Door((x, y), False)
+                    sprite_group.add(tile)
                 elif graphics_type == "door":
-                    sprite_group.add(Door((x, y), True))
+                    tile = Door((x, y), True)
+                    sprite_group.add(tile)
                 elif graphics_type == "pigs":
                     if col:
-                        sprite_group.add(Pig((x, y)))
+                        tile = Pig((x, y))
+                        sprite_group.add(tile)
                     else:
-                        self.enemy_block.add(Tile((x, y), tile_size=TILE_SIZE))
+                        tile = Tile((x, y), tile_size=TILE_SIZE)
+                        self.enemy_block.add(tile)
                 else:
                     tile = tiles[col]
                     sprite_group.add(StaticTile((x, y), tile))
@@ -86,19 +101,9 @@ class Level:
                 enemy.reverse()
 
     def scroll(self):
-        hero = self.hero.sprite
-        hero_x = hero.rect.centerx
-        direction_x = hero.direction.x
-
-        if hero_x < SCREEN_SIZE[0] * 0.3 and direction_x < 0:
-            self.world_shift = 8
-            hero.speed = 0
-        elif hero_x > SCREEN_SIZE[0] * 0.7 and direction_x > 0:
-            self.world_shift = -1
-            hero.speed = 0
-        else:
-            self.world_shift = 0
-            hero.speed = 8
+        self.camera.update(self.hero.sprite)
+        for sprite in self.get_all_sprites():
+            self.camera.apply(sprite)
 
     def horizontal_move(self):
         hero = self.hero.sprite
@@ -142,34 +147,34 @@ class Level:
             hero.on_ceiling = False
 
     def render(self):
-        self.background_sprites.update(self.world_shift)
+        self.background_sprites.update()
         self.background_sprites.draw(self.screen)
 
-        self.decoration_sprites.update(self.world_shift)
+        self.decoration_sprites.update()
         self.decoration_sprites.draw(self.screen)
 
-        self.terrain_sprites.update(self.world_shift)
+        self.terrain_sprites.update()
         self.terrain_sprites.draw(self.screen)
 
-        self.diamond_sprites.update(self.world_shift)
+        self.diamond_sprites.update()
         self.diamond_sprites.draw(self.screen)
 
-        self.platform_sprites.update(self.world_shift)
+        self.platform_sprites.update()
         self.platform_sprites.draw(self.screen)
 
-        self.backgroud_door_sprite.update(self.world_shift)
+        self.backgroud_door_sprite.update()
         self.backgroud_door_sprite.draw(self.screen)
 
-        self.active_door_sprite.update(self.world_shift)
+        self.active_door_sprite.update()
         self.active_door_sprite.draw(self.screen)
 
-        self.enemies_sprites.update(self.world_shift)
+        self.enemies_sprites.update()
         self.enemy_collision()
         self.enemies_sprites.draw(self.screen)
 
-        self.enemy_block.update(self.world_shift)
+        self.enemy_block.update()
 
-        self.box_sprites.update(self.world_shift)
+        self.box_sprites.update()
         self.box_sprites.draw(self.screen)
 
         self.hero.update()

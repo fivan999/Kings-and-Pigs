@@ -12,7 +12,7 @@ class Hero(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=position)
 
         self.direction = pygame.math.Vector2(0, 0)
-        self.speed = 10
+        self.speed = 6
         self.gravity = 0.7
         self.jump_speed = -10
 

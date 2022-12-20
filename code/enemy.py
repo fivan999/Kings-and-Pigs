@@ -22,8 +22,8 @@ class Pig(AnimatedTile):
     def move(self):
         self.rect.x += self.speed
 
-    def update(self, delta_x=0):
-        super().update(delta_x)
+    def update(self):
+        super().update()
         if self.back_move:
             self.image = pygame.transform.flip(self.image, flip_x=True, flip_y=False)
         self.move()

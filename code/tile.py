@@ -9,9 +9,6 @@ class Tile(pygame.sprite.Sprite):
         self.image = pygame.Surface((tile_size, tile_size))
         self.rect = self.image.get_rect(topleft=position)
 
-    def update(self, delta_x=0):
-        self.rect.x += delta_x
-
 
 class StaticTile(Tile):
     def __init__(self, position, surface):
@@ -51,8 +48,7 @@ class AnimatedTile(Tile):
         self.image_index = (self.image_index + self.animation_speed) % len(self.images)
         self.image = self.images[int(self.image_index)]
 
-    def update(self, delta_x=0):
-        super().update(delta_x)
+    def update(self):
         self.animate()
 
 
