@@ -25,7 +25,8 @@ class Hero(pygame.sprite.Sprite):
 
     def import_animation_images(self):
         self.animations = {"idle": list(), "jump": list(),
-                           "run": list(), "fall": list()}
+                           "run": list(), "fall": list(),
+                           "hit": list()}
 
         for condition in self.animations:
             self.animations[condition] = load_images("../graphics/character/" + condition + '/')
@@ -43,6 +44,9 @@ class Hero(pygame.sprite.Sprite):
 
         if keys[pygame.K_SPACE] and self.on_ground:
             self.jump()
+
+        if keys[pygame.K_e] and self.status != "hit":
+            self.status = "hit"
 
     def jump(self):
         self.direction.y = self.jump_speed

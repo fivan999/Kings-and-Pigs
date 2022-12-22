@@ -16,7 +16,9 @@ class Level:
         self.cur_x = None
 
     def setup_level(self, level):
-        self.hero = pygame.sprite.GroupSingle()
+        self.hero = None
+        self.hero_group = pygame.sprite.GroupSingle()
+
         self.create_tile_group(import_csv(level["hero"]), "hero")
 
         self.terrain_sprites = self.create_tile_group(import_csv(level["terrain"]),
@@ -39,7 +41,7 @@ class Level:
                                                       "pigs")
 
     def get_all_sprites(self):
-        return self.hero.sprites() + self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
+        return self.hero_group.sprites() + self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
                self.decoration_sprites.sprites() + self.box_sprites.sprites() + self.diamond_sprites.sprites() + \
                self.platform_sprites.sprites() + self.backgroud_door_sprite.sprites() + \
                self.active_door_sprite.sprites() + self.enemy_block.sprites() + self.enemies_sprites.sprites()
@@ -68,7 +70,8 @@ class Level:
                 x, y = col_ind * TILE_SIZE, row_ind * TILE_SIZE
                 if graphics_type == "hero":
                     tile = Hero((x, y))
-                    self.hero.add(tile)
+                    self.hero = tile
+                    self.hero_group.add(tile)
                     return
                 elif graphics_type == "box":
                     tile = Box((x, y))
@@ -101,12 +104,12 @@ class Level:
                 enemy.reverse()
 
     def scroll(self):
-        self.camera.update(self.hero.sprite)
+        self.camera.update(self.hero)
         for sprite in self.get_all_sprites():
             self.camera.apply(sprite)
 
     def horizontal_move(self):
-        hero = self.hero.sprite
+        hero = self.hero
         hero.rect.x += hero.direction.x * hero.speed
 
         tiles_group = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
@@ -127,7 +130,7 @@ class Level:
             hero.on_right = False
 
     def vertical_move(self):
-        hero = self.hero.sprite
+        hero = self.hero
         hero.use_gravity()
 
         tiles_group = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
@@ -147,6 +150,13 @@ class Level:
             hero.on_ground = False
         if hero.on_ceiling and hero.direction.y > 0:
             hero.on_ceiling = False
+
+    def update_hero(self):
+        self.hero.update()
+        self.horizontal_move()
+        self.vertical_move()
+        self.scroll()
+        self.hero_group.draw(self.screen)
 
     def render(self):
         self.background_sprites.update()
@@ -179,8 +189,4 @@ class Level:
         self.box_sprites.update()
         self.box_sprites.draw(self.screen)
 
-        self.hero.update()
-        self.horizontal_move()
-        self.vertical_move()
-        self.scroll()
-        self.hero.draw(self.screen)
+        self.update_hero()
