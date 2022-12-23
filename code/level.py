@@ -6,6 +6,8 @@ from settings import SCREEN_SIZE
 from support import *
 from enemy import *
 from camera import Camera
+from ui import UI
+from collections import defaultdict
 
 
 class Level:
@@ -14,6 +16,8 @@ class Level:
         self.camera = Camera()
         self.setup_level(level)
         self.cur_x = None
+        self.ui = UI(self.screen)
+        self.cur_diamonds = 0
 
     def setup_level(self, level):
         self.hero = None
@@ -98,10 +102,28 @@ class Level:
 
         return sprite_group
 
-    def enemy_collision(self):
+    def enemy_block_collision(self):
         for enemy in self.enemies_sprites.sprites():
             if pygame.sprite.spritecollide(enemy, self.enemy_block, dokill=False):
                 enemy.reverse()
+
+    def enemy_hero_collision(self):
+        hero = self.hero
+
+        for enemy in self.enemies_sprites.sprites():
+            if enemy.rect.colliderect(hero):
+                if hero.status == 'attack':
+                    enemy.kill()
+                elif hero.damage_time == 0:
+                    hero.get_damage()
+
+    def diamond_collision(self):
+        hero = self.hero
+
+        for diamond in self.diamond_sprites.sprites():
+            if diamond.rect.colliderect(hero):
+                diamond.kill()
+                self.cur_diamonds += 1
 
     def scroll(self):
         self.camera.update(self.hero)
@@ -153,8 +175,11 @@ class Level:
 
     def update_hero(self):
         self.hero.update()
-        self.horizontal_move()
-        self.vertical_move()
+        self.enemy_hero_collision()
+        if self.hero.status != 'attack':
+            self.horizontal_move()
+            self.vertical_move()
+        self.diamond_collision()
         self.scroll()
         self.hero_group.draw(self.screen)
 
@@ -181,12 +206,15 @@ class Level:
         self.active_door_sprite.draw(self.screen)
 
         self.enemies_sprites.update()
-        self.enemy_collision()
+        self.enemy_block_collision()
         self.enemies_sprites.draw(self.screen)
 
         self.enemy_block.update()
 
         self.box_sprites.update()
         self.box_sprites.draw(self.screen)
+
+        self.ui.render_health(self.hero.health)
+        self.ui.render_diamonds(self.cur_diamonds)
 
         self.update_hero()
