@@ -17,24 +17,6 @@ class StaticTile(Tile):
         self.rect = self.image.get_rect(topleft=position)
 
 
-class Box(StaticTile):
-    path = "../graphics/decorations/box.png"
-
-    def __init__(self, position):
-        super().__init__(position, pygame.image.load(self.path).convert_alpha())
-        self.rect.y += TILE_SIZE - self.image.get_height()
-        self.rect.x += TILE_SIZE - self.image.get_width()
-
-
-class Door(StaticTile):
-    path = "../graphics/decorations/door.png"
-
-    def __init__(self, position, is_active):
-        super().__init__(position, pygame.image.load(self.path).convert_alpha())
-        self.is_active = is_active
-        self.rect.y -= self.image.get_height() - TILE_SIZE
-
-
 class AnimatedTile(Tile):
     def __init__(self, position, path):
         super().__init__(position)
@@ -57,3 +39,12 @@ class Diamond(AnimatedTile):
         super().__init__(position, path)
         self.rect.x += TILE_SIZE // 2 - self.image.get_width() // 2
         self.rect.y += TILE_SIZE // 2 - self.image.get_height() // 2
+
+
+class Box(StaticTile):
+    path = "../graphics/decorations/box.png"
+
+    def __init__(self, position):
+        super().__init__(position, pygame.image.load(self.path).convert_alpha())
+        self.rect.y += TILE_SIZE - self.image.get_height()
+        self.rect.x += TILE_SIZE - self.image.get_width()

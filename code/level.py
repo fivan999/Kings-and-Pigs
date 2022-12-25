@@ -7,7 +7,8 @@ from support import *
 from enemy import *
 from camera import Camera
 from ui import UI
-from collections import defaultdict
+from door import Door
+from effects import EnemyDestroyEffect
 
 
 class Level:
@@ -18,11 +19,12 @@ class Level:
         self.cur_x = None
         self.ui = UI(self.screen)
         self.cur_diamonds = 0
+        self.finished_level = False
 
     def setup_level(self, level):
         self.hero = None
         self.hero_group = pygame.sprite.GroupSingle()
-
+        self.effects_sprites = pygame.sprite.Group()
         self.create_tile_group(import_csv(level["hero"]), "hero")
 
         self.terrain_sprites = self.create_tile_group(import_csv(level["terrain"]),
@@ -47,7 +49,7 @@ class Level:
     def get_all_sprites(self):
         return self.hero_group.sprites() + self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
                self.decoration_sprites.sprites() + self.box_sprites.sprites() + self.diamond_sprites.sprites() + \
-               self.platform_sprites.sprites() + self.backgroud_door_sprite.sprites() + \
+               self.platform_sprites.sprites() + self.backgroud_door_sprite.sprites() + self.effects_sprites.sprites() + \
                self.active_door_sprite.sprites() + self.enemy_block.sprites() + self.enemies_sprites.sprites()
 
     @staticmethod
@@ -115,7 +117,18 @@ class Level:
                 if hero.status == 'attack':
                     enemy.kill()
                 elif hero.damage_time == 0:
-                    hero.get_damage()
+                    if enemy.rect.top < hero.rect.bottom < enemy.rect.centery and hero.direction.y > 0:
+                        enemy.kill()
+                        # self.effects_sprites.add(EnemyDestroyEffect(enemy.rect.topleft))
+                        hero.jump()
+                    else:
+                        hero.get_damage()
+
+    def door_collision(self):
+        if pygame.sprite.spritecollide(self.hero, self.active_door_sprite, dokill=False):
+            self.hero.colliding_door = self.active_door_sprite
+        else:
+            self.hero.colliding_door = None
 
     def diamond_collision(self):
         hero = self.hero
@@ -124,6 +137,10 @@ class Level:
             if diamond.rect.colliderect(hero):
                 diamond.kill()
                 self.cur_diamonds += 1
+
+    def check_end_level(self):
+        if self.hero.finished_level:
+            self.finished_level = True
 
     def scroll(self):
         self.camera.update(self.hero)
@@ -180,6 +197,8 @@ class Level:
             self.horizontal_move()
             self.vertical_move()
         self.diamond_collision()
+        self.door_collision()
+        self.check_end_level()
         self.scroll()
         self.hero_group.draw(self.screen)
 
@@ -218,3 +237,6 @@ class Level:
         self.ui.render_diamonds(self.cur_diamonds)
 
         self.update_hero()
+
+        self.effects_sprites.update()
+        self.effects_sprites.draw(self.screen)
