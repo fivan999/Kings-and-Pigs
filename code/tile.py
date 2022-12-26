@@ -35,8 +35,10 @@ class AnimatedTile(Tile):
 
 
 class Diamond(AnimatedTile):
-    def __init__(self, position, path):
-        super().__init__(position, path)
+    path = "../graphics/stuff/animate_diamonds/"
+
+    def __init__(self, position):
+        super().__init__(position, Diamond.path)
         self.rect.x += TILE_SIZE // 2 - self.image.get_width() // 2
         self.rect.y += TILE_SIZE // 2 - self.image.get_height() // 2
 
