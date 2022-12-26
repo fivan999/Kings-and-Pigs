@@ -1,5 +1,3 @@
-import time
-
 import pygame
 from support import load_images
 
@@ -26,7 +24,6 @@ class Hero(pygame.sprite.Sprite):
         self.on_ceiling = False
         self.on_right = False
         self.on_left = False
-        self.colliding_door = None
         self.finished_level = False
 
     def import_animation_images(self):
@@ -36,29 +33,6 @@ class Hero(pygame.sprite.Sprite):
 
         for condition in self.animations:
             self.animations[condition] = load_images("../graphics/character/" + condition + '/')
-
-    def move_x(self):
-        if self.finished_level:
-            return
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_RIGHT]:
-            self.direction.x = 1
-            self.facing_right = True
-        elif keys[pygame.K_LEFT]:
-            self.direction.x = -1
-            self.facing_right = False
-        else:
-            self.direction.x = 0
-
-        if keys[pygame.K_SPACE] and self.on_ground:
-            self.jump()
-
-        if keys[pygame.K_e] and self.on_ground:
-            self.status = "attack"
-
-        if keys[pygame.K_q] and self.colliding_door:
-            self.colliding_door.sprites()[0].start_animation()
 
     def jump(self):
         self.direction.y = self.jump_speed
@@ -89,10 +63,6 @@ class Hero(pygame.sprite.Sprite):
 
     def pass_damage_time(self):
         self.damage_time = max(self.damage_time - 0.02, 0)
-
-    def check_finished_level(self):
-        self.finished_level = self.colliding_door is not None and \
-                              self.colliding_door.sprites()[0].finished_animation
 
     def animate(self):
         self.get_status()
@@ -128,7 +98,5 @@ class Hero(pygame.sprite.Sprite):
                 self.rect = self.image.get_rect(midtop=self.rect.midtop)
 
     def update(self):
-        self.move_x()
         self.pass_damage_time()
         self.animate()
-        self.check_finished_level()

@@ -16,10 +16,14 @@ class Level:
     def __init__(self, level, screen):
         self.screen = screen
         self.camera = Camera()
-        self.setup_level(level)
-        self.cur_x = None
         self.ui = UI(self.screen)
+        self.total_pigs = 0
+        self.setup_level(level)
+
+        self.cur_x = None
+        self.killed_pigs = 0
         self.cur_diamonds = 0
+        self.colliding_door = False
         self.finished_level = False
 
     def setup_level(self, level):
@@ -100,6 +104,7 @@ class Level:
                     if col:
                         tile = Pig((x, y))
                         sprite_group.add(tile)
+                        self.total_pigs += 1
                     else:
                         tile = Tile((x, y), tile_size=TILE_SIZE)
                         self.enemy_block.add(tile)
@@ -125,17 +130,23 @@ class Level:
             if sprite.rect.colliderect(hero):
                 if hero.status == 'attack':
                     sprite.kill()
+                    if type(sprite) == Pig:
+                        self.killed_pigs += 1
                 elif hero.damage_time == 0:
                     if sprite.rect.top < hero.rect.bottom < sprite.rect.centery and hero.direction.y > 0:
                         sprite.kill()
                         # self.effects_sprites.add(EnemyDestroyEffect(enemy.rect.topleft))
                         hero.jump()
+                        if type(sprite) == Pig:
+                            self.killed_pigs += 1
                     elif type(sprite) == Pig:
                         hero.get_damage()
 
     def cannon_ball_hero_collision(self):
-        hero = self.hero
+        if self.finished_level:
+            return
 
+        hero = self.hero
         for ball in self.cannon_balls_sprites.sprites():
             if hero.rect.colliderect(ball):
                 hero.get_damage()
@@ -145,9 +156,9 @@ class Level:
 
     def door_collision(self):
         if pygame.sprite.spritecollide(self.hero, self.active_door_sprite, dokill=False):
-            self.hero.colliding_door = self.active_door_sprite
+            self.colliding_door = self.active_door_sprite.sprites()[0]
         else:
-            self.hero.colliding_door = None
+            self.colliding_door = False
 
     def diamond_collision(self):
         hero = self.hero
@@ -164,9 +175,9 @@ class Level:
                 cannon.shot = True
                 self.cannon_balls_sprites.add(CannonBall(position))
 
-    def check_end_level(self):
-        if self.hero.finished_level:
-            self.finished_level = True
+    def check_finished_level(self):
+        self.finished_level = self.colliding_door and \
+                              self.colliding_door.finished_animation
 
     def scroll(self):
         self.camera.update(self.hero)
@@ -216,7 +227,34 @@ class Level:
         if hero.on_ceiling and hero.direction.y > 0:
             hero.on_ceiling = False
 
+    def get_events(self):
+        if self.finished_level:
+            return
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RIGHT]:
+            self.hero.direction.x = 1
+            self.hero.facing_right = True
+        elif keys[pygame.K_LEFT]:
+            self.hero.direction.x = -1
+            self.hero.facing_right = False
+        else:
+            self.hero.direction.x = 0
+
+        if keys[pygame.K_SPACE] and self.hero.on_ground:
+            self.hero.jump()
+
+        if keys[pygame.K_e] and self.hero.on_ground:
+            self.hero.status = "attack"
+
+        if keys[pygame.K_q] and self.colliding_door:
+            if self.total_pigs == self.killed_pigs:
+                self.colliding_door.start_animation()
+            else:
+                self.ui.set_current_text("kill all pigs to finish level")
+
     def update_hero(self):
+        self.get_events()
         self.hero.update()
         self.enemy_cannon_hero_collision()
         self.cannon_ball_hero_collision()
@@ -225,9 +263,14 @@ class Level:
             self.vertical_move()
         self.diamond_collision()
         self.door_collision()
-        self.check_end_level()
         self.scroll()
         self.hero_group.draw(self.screen)
+        self.check_finished_level()
+
+    def update_ui(self):
+        self.ui.render_health(self.hero.health)
+        self.ui.render_text()
+        self.ui.render_diamonds(self.cur_diamonds)
 
     def render(self):
         self.background_sprites.update()
@@ -266,8 +309,7 @@ class Level:
         self.box_sprites.update()
         self.box_sprites.draw(self.screen)
 
-        self.ui.render_health(self.hero.health)
-        self.ui.render_diamonds(self.cur_diamonds)
+        self.update_ui()
 
         self.update_hero()
 
