@@ -9,4 +9,5 @@ level_1 = {
     "background": "../levels/lvl1/lvl1_Background.csv",
     "door": "../levels/lvl1/lvl1_Door.csv",
     "background_door": "../levels/lvl1/lvl1_Background_door.csv",
+    "cannon": "../levels/lvl1/lvl1_Cannon.csv"
 }
