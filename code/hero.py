@@ -68,10 +68,11 @@ class Hero(pygame.sprite.Sprite):
         self.rect.y += self.direction.y
 
     def get_damage(self):
-        self.damage_time = 2
-        self.health = max(self.health - 1, 0)
-        self.jump()
-        self.direction.x = -1
+        if not self.finished_level:
+            self.damage_time = 2
+            self.health = max(self.health - 1, 0)
+            self.jump()
+            self.direction.x = -1
 
     def get_status(self):
         if self.status == 'attack':

@@ -5,11 +5,20 @@ from settings import TILE_SIZE
 
 
 class Door(StaticTile):
-    path = "../graphics/door/idle/door.png"
+    path_closed = "../graphics/door/idle/closed.png"
+    path_opened = "../graphics/door/idle/opened.png"
 
     def __init__(self, position, is_active):
-        super().__init__(position, pygame.image.load(self.path).convert_alpha())
+        if is_active:
+            img = pygame.image.load(Door.path_closed).convert_alpha()
+            self.images = load_images("../graphics/door/opening/")
+        else:
+            img = pygame.image.load(Door.path_opened).convert_alpha()
+            self.images = load_images("../graphics/door/closing/")
+
+        super().__init__(position, img)
         self.is_active = is_active
+        self.time_before_closing = 5
         self.rect.y -= self.image.get_height() - TILE_SIZE
         self.animation_started = False
         self.finished_animation = False
@@ -17,8 +26,6 @@ class Door(StaticTile):
     def start_animation(self):
         if not self.animation_started:
             self.animation_started = True
-            self.images = load_images("../graphics/door/opening/")
-
             self.image_index = 0
             self.animation_speed = 0.15
             self.image = self.images[self.image_index]
@@ -33,3 +40,7 @@ class Door(StaticTile):
     def update(self):
         if self.animation_started:
             self.animate()
+        elif not self.finished_animation and not self.is_active and self.time_before_closing == 0:
+            self.start_animation()
+        else:
+            self.time_before_closing = max(self.time_before_closing - 0.1, 0)

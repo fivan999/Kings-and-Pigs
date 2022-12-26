@@ -8,6 +8,7 @@ from enemy import *
 from camera import Camera
 from ui import UI
 from door import Door
+from cannon import Cannon, CannonBall
 from effects import EnemyDestroyEffect
 
 
@@ -45,11 +46,15 @@ class Level:
         self.enemy_block = pygame.sprite.Group()
         self.enemies_sprites = self.create_tile_group(import_csv(level["pigs"]),
                                                       "pigs")
+        self.cannon_balls_sprites = pygame.sprite.Group()
+        self.cannon_sprites = self.create_tile_group(import_csv(level["cannon"]),
+                                                     "cannon")
 
     def get_all_sprites(self):
         return self.hero_group.sprites() + self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
                self.decoration_sprites.sprites() + self.box_sprites.sprites() + self.diamond_sprites.sprites() + \
-               self.platform_sprites.sprites() + self.backgroud_door_sprite.sprites() + self.effects_sprites.sprites() + \
+               self.platform_sprites.sprites() + self.backgroud_door_sprite.sprites() + \
+               self.effects_sprites.sprites() + self.cannon_sprites.sprites() + self.cannon_balls_sprites.sprites() + \
                self.active_door_sprite.sprites() + self.enemy_block.sprites() + self.enemies_sprites.sprites()
 
     @staticmethod
@@ -83,7 +88,7 @@ class Level:
                     tile = Box((x, y))
                     sprite_group.add(tile)
                 elif graphics_type == "diamonds":
-                    tile = Diamond((x, y), "../graphics/stuff/animate_diamonds/")
+                    tile = Diamond((x, y))
                     sprite_group.add(tile)
                 elif graphics_type == "background_door":
                     tile = Door((x, y), False)
@@ -98,6 +103,9 @@ class Level:
                     else:
                         tile = Tile((x, y), tile_size=TILE_SIZE)
                         self.enemy_block.add(tile)
+                elif graphics_type == "cannon":
+                    tile = Cannon((x, y))
+                    sprite_group.add(tile)
                 else:
                     tile = tiles[col]
                     sprite_group.add(StaticTile((x, y), tile))
@@ -109,20 +117,31 @@ class Level:
             if pygame.sprite.spritecollide(enemy, self.enemy_block, dokill=False):
                 enemy.reverse()
 
-    def enemy_hero_collision(self):
+    def enemy_cannon_hero_collision(self):
         hero = self.hero
 
-        for enemy in self.enemies_sprites.sprites():
-            if enemy.rect.colliderect(hero):
+        collide_sprites = self.enemies_sprites.sprites() + self.cannon_sprites.sprites()
+        for sprite in collide_sprites:
+            if sprite.rect.colliderect(hero):
                 if hero.status == 'attack':
-                    enemy.kill()
+                    sprite.kill()
                 elif hero.damage_time == 0:
-                    if enemy.rect.top < hero.rect.bottom < enemy.rect.centery and hero.direction.y > 0:
-                        enemy.kill()
+                    if sprite.rect.top < hero.rect.bottom < sprite.rect.centery and hero.direction.y > 0:
+                        sprite.kill()
                         # self.effects_sprites.add(EnemyDestroyEffect(enemy.rect.topleft))
                         hero.jump()
-                    else:
+                    elif type(sprite) == Pig:
                         hero.get_damage()
+
+    def cannon_ball_hero_collision(self):
+        hero = self.hero
+
+        for ball in self.cannon_balls_sprites.sprites():
+            if hero.rect.colliderect(ball):
+                hero.get_damage()
+                ball.kill()
+            elif pygame.sprite.spritecollideany(ball, self.terrain_sprites):
+                ball.kill()
 
     def door_collision(self):
         if pygame.sprite.spritecollide(self.hero, self.active_door_sprite, dokill=False):
@@ -137,6 +156,13 @@ class Level:
             if diamond.rect.colliderect(hero):
                 diamond.kill()
                 self.cur_diamonds += 1
+
+    def check_cannon_shoot(self):
+        for cannon in self.cannon_sprites.sprites():
+            if int(cannon.image_index) == 2 and not cannon.shot:
+                position = cannon.rect.topleft
+                cannon.shot = True
+                self.cannon_balls_sprites.add(CannonBall(position))
 
     def check_end_level(self):
         if self.hero.finished_level:
@@ -192,7 +218,8 @@ class Level:
 
     def update_hero(self):
         self.hero.update()
-        self.enemy_hero_collision()
+        self.enemy_cannon_hero_collision()
+        self.cannon_ball_hero_collision()
         if self.hero.status != 'attack':
             self.horizontal_move()
             self.vertical_move()
@@ -227,8 +254,14 @@ class Level:
         self.enemies_sprites.update()
         self.enemy_block_collision()
         self.enemies_sprites.draw(self.screen)
-
         self.enemy_block.update()
+
+        self.cannon_sprites.update()
+        self.cannon_sprites.draw(self.screen)
+        self.check_cannon_shoot()
+
+        self.cannon_balls_sprites.update()
+        self.cannon_balls_sprites.draw(self.screen)
 
         self.box_sprites.update()
         self.box_sprites.draw(self.screen)

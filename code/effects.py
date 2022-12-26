@@ -15,7 +15,6 @@ class EnemyDestroyEffect(pygame.sprite.Sprite):
         if self.image_index >= len(self.images):
             self.kill()
             return
-
         self.image = self.images[int(self.image_index)]
         self.image_index += self.animation_speed
 
