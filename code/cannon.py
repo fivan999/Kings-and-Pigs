@@ -1,5 +1,3 @@
-import copy
-
 import pygame
 from tile import StaticTile
 from settings import TILE_SIZE

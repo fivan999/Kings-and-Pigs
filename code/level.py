@@ -1,15 +1,12 @@
-import pygame
 from tile import *
-from settings import TILE_SIZE
 from hero import Hero
-from settings import SCREEN_SIZE
 from support import *
 from enemy import *
 from camera import Camera
 from ui import UI
 from door import Door
 from cannon import Cannon, CannonBall
-from effects import EnemyDestroyEffect
+from effects import EnemyDestroyEffect, BombExplosionEffect
 
 
 class Level:
@@ -129,16 +126,19 @@ class Level:
         for sprite in collide_sprites:
             if sprite.rect.colliderect(hero):
                 if hero.status == 'attack':
-                    sprite.kill()
                     if type(sprite) == Pig:
                         self.killed_pigs += 1
+                    else:
+                        self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
+                    sprite.kill()
                 elif hero.damage_time == 0:
-                    if sprite.rect.top < hero.rect.bottom < sprite.rect.centery and hero.direction.y > 0:
-                        sprite.kill()
-                        # self.effects_sprites.add(EnemyDestroyEffect(enemy.rect.topleft))
+                    if sprite.rect.top < hero.rect.bottom <= sprite.rect.centery and hero.direction.y > 0:
                         hero.jump()
                         if type(sprite) == Pig:
                             self.killed_pigs += 1
+                        else:
+                            self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
+                        sprite.kill()
                     elif type(sprite) == Pig:
                         hero.get_damage()
 
@@ -148,10 +148,12 @@ class Level:
 
         hero = self.hero
         for ball in self.cannon_balls_sprites.sprites():
-            if hero.rect.colliderect(ball):
-                hero.get_damage()
-                ball.kill()
-            elif pygame.sprite.spritecollideany(ball, self.terrain_sprites):
+            collide_hero = hero.rect.colliderect(ball)
+            collide_terrain = pygame.sprite.spritecollideany(ball, self.terrain_sprites)
+            if collide_terrain or collide_hero:
+                if collide_hero:
+                    hero.get_damage()
+                self.effects_sprites.add(BombExplosionEffect(ball.rect.center))
                 ball.kill()
 
     def door_collision(self):

@@ -12,7 +12,7 @@ class UI:
 
         self.font = pygame.font.Font('../fonts/ARCADEPI.TTF', 12)
         self.numbers_bar = pygame.image.load('../graphics/health and diamonds/num_bar.png').convert_alpha()
-        self.numbers_pos = 425, 10
+        self.numbers_pos = SCREEN_SIZE[0] - 75, 10
 
         self.text_time_remains = 0
         self.current_text = None

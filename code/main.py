@@ -1,8 +1,8 @@
 import sys
 import pygame
 from settings import *
-from level import Level
-from game_data import level_1
+from game import Game
+from game_data import levels
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
     screen = pygame.display.set_mode(SCREEN_SIZE)
 
     clock = pygame.time.Clock()
-    level = Level(level_1, screen)
+    game = Game(levels, screen)
 
     running = True
     while running:
@@ -21,8 +21,8 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        screen.fill((0, 0, 0))
-        level.render()
+        screen.fill((63, 56, 81))
+        game.render()
         pygame.display.flip()
 
     pygame.quit()
