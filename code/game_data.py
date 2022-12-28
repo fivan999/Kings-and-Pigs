@@ -11,3 +11,21 @@ level_1 = {
     "background_door": "../levels/lvl1/lvl1_Background_door.csv",
     "cannon": "../levels/lvl1/lvl1_Cannon.csv"
 }
+
+
+level_2 = {
+    "terrain": "../levels/lvl2/lvl2_Terrain.csv",
+    "box": "../levels/lvl2/lvl2_Box.csv",
+    "decorations": "../levels/lvl2/lvl2_Decorations.csv",
+    "diamonds": "../levels/lvl2/lvl2_Diamonds.csv",
+    "hero": "../levels/lvl2/lvl2_Hero.csv",
+    "pigs": "../levels/lvl2/lvl2_Enemy.csv",
+    "default_platforms": "../levels/lvl2/lvl2_Default_platforms.csv",
+    "background": "../levels/lvl2/lvl2_Background.csv",
+    "door": "../levels/lvl2/lvl2_Door.csv",
+    "background_door": "../levels/lvl2/lvl2_Background_door.csv",
+    "cannon": "../levels/lvl2/lvl2_Cannon.csv"
+}
+
+
+levels = [level_1, level_2]
