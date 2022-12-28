@@ -25,7 +25,6 @@ class Level:
 
     def setup_level(self, level):
         self.hero = None
-        self.hero_group = pygame.sprite.GroupSingle()
         self.effects_sprites = pygame.sprite.Group()
         self.create_tile_group(import_csv(level["hero"]), "hero")
 
@@ -52,7 +51,7 @@ class Level:
                                                      "cannon")
 
     def get_all_sprites(self):
-        return self.hero_group.sprites() + self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
+        return [self.hero] + self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
                self.decoration_sprites.sprites() + self.box_sprites.sprites() + self.diamond_sprites.sprites() + \
                self.platform_sprites.sprites() + self.backgroud_door_sprite.sprites() + \
                self.effects_sprites.sprites() + self.cannon_sprites.sprites() + self.cannon_balls_sprites.sprites() + \
@@ -83,7 +82,6 @@ class Level:
                 if graphics_type == "hero":
                     tile = Hero((x, y))
                     self.hero = tile
-                    self.hero_group.add(tile)
                     return
                 elif graphics_type == "box":
                     tile = Box((x, y))
@@ -229,7 +227,7 @@ class Level:
         if hero.on_ceiling and hero.direction.y > 0:
             hero.on_ceiling = False
 
-    def get_events(self):
+    def get_event(self):
         if self.finished_level:
             return
 
@@ -245,10 +243,8 @@ class Level:
 
         if keys[pygame.K_SPACE] and self.hero.on_ground:
             self.hero.jump()
-
         if keys[pygame.K_e] and self.hero.on_ground:
             self.hero.status = "attack"
-
         if keys[pygame.K_q] and self.colliding_door:
             if self.total_pigs == self.killed_pigs:
                 self.colliding_door.start_animation()
@@ -256,7 +252,7 @@ class Level:
                 self.ui.set_current_text("kill all pigs to finish level")
 
     def update_hero(self):
-        self.get_events()
+        self.get_event()
         self.hero.update()
         self.enemy_cannon_hero_collision()
         self.cannon_ball_hero_collision()
@@ -266,7 +262,7 @@ class Level:
         self.diamond_collision()
         self.door_collision()
         self.scroll()
-        self.hero_group.draw(self.screen)
+        self.hero.draw(self.screen)
         self.check_finished_level()
 
     def update_ui(self):

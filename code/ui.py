@@ -10,7 +10,7 @@ class UI:
         self.heart = pygame.image.load('../graphics/health and diamonds/heart.png').convert_alpha()
         self.heart_pos = 28, 24
 
-        self.font = pygame.font.Font('../fonts/ARCADEPI.TTF', 12)
+        self.font = pygame.font.Font('../fonts/ARCADEPI.TTF', 13)
         self.numbers_bar = pygame.image.load('../graphics/health and diamonds/num_bar.png').convert_alpha()
         self.numbers_pos = SCREEN_SIZE[0] - 75, 10
 

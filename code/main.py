@@ -21,6 +21,8 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
+            game.get_event(event)
+
         screen.fill((63, 56, 81))
         game.render()
         pygame.display.flip()

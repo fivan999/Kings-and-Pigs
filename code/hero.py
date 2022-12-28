@@ -100,3 +100,6 @@ class Hero(pygame.sprite.Sprite):
     def update(self):
         self.pass_damage_time()
         self.animate()
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
