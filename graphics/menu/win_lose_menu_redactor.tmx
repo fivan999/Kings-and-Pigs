@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="9" height="7" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="1">
+ <tileset firstgid="1" source="../tilesets/terrain.tsx"/>
+ <tileset firstgid="177" source="../tilesets/setup_enemy.tsx"/>
+ <tileset firstgid="179" source="../tilesets/cannon.tsx"/>
+ <tileset firstgid="180" source="../tilesets/decorations.tsx"/>
+ <layer id="1" name="Слой тайлов 1" width="9" height="7">
+  <data encoding="csv">
+1,2,2,2,2,2,2,2,3,
+17,66,66,66,66,66,66,66,19,
+17,66,66,66,66,66,66,66,19,
+17,66,66,66,66,66,66,66,19,
+17,66,66,66,66,66,66,66,19,
+17,66,66,66,66,66,66,66,19,
+33,34,34,34,34,34,34,34,35
+</data>
+ </layer>
+ <layer id="2" name="Слой тайлов 2" width="9" height="7">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,180,0,
+0,0,178,0,0,0,0,195,0,
+0,0,189,0,0,0,0,0,0,
+0,178,0,0,0,0,179,0,0,
+0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+</map>

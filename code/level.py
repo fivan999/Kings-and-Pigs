@@ -1,3 +1,5 @@
+import pygame
+
 from tile import *
 from hero import Hero
 from support import *
@@ -7,15 +9,19 @@ from ui import UI
 from door import Door
 from cannon import Cannon, CannonBall
 from effects import EnemyDestroyEffect, BombExplosionEffect
+from menu import WinLoseMenu
 
 
 class Level:
-    def __init__(self, level, screen):
+    def __init__(self, level, screen, level_num, set_menu):
         self.screen = screen
         self.camera = Camera()
         self.ui = UI(self.screen)
         self.total_pigs = 0
         self.setup_level(level)
+        self.set_menu = set_menu
+        self.level_num = level_num
+        self.viewing_menu = False
 
         self.cur_x = None
         self.killed_pigs = 0
@@ -148,7 +154,7 @@ class Level:
         for ball in self.cannon_balls_sprites.sprites():
             collide_hero = hero.rect.colliderect(ball)
             collide_terrain = pygame.sprite.spritecollideany(ball, self.terrain_sprites)
-            if collide_terrain or collide_hero:
+            if collide_terrain or (collide_hero and not self.viewing_menu):
                 if collide_hero:
                     hero.get_damage()
                 self.effects_sprites.add(BombExplosionEffect(ball.rect.center))
@@ -175,9 +181,18 @@ class Level:
                 cannon.shot = True
                 self.cannon_balls_sprites.add(CannonBall(position))
 
-    def check_finished_level(self):
+    def check_win(self):
         self.finished_level = self.colliding_door and \
                               self.colliding_door.finished_animation
+        if self.level_num == "last" and self.finished_level:
+            self.level_menu = WinLoseMenu(self.screen, "win", self.set_menu)
+            self.viewing_menu = True
+
+    def check_lose(self):
+        if self.hero.health == 0:
+            self.level_menu = WinLoseMenu(self.screen, "lose", self.set_menu)
+            self.viewing_menu = True
+            self.update_ui()
 
     def scroll(self):
         self.camera.update(self.hero)
@@ -228,7 +243,7 @@ class Level:
             hero.on_ceiling = False
 
     def get_event(self):
-        if self.finished_level:
+        if self.finished_level or self.viewing_menu:
             return
 
         keys = pygame.key.get_pressed()
@@ -251,26 +266,32 @@ class Level:
             else:
                 self.ui.set_current_text("kill all pigs to finish level")
 
+    def get_menu_event(self, event):
+        self.level_menu.get_event(event)
+
     def update_hero(self):
-        self.get_event()
-        self.hero.update()
-        self.enemy_cannon_hero_collision()
+        if not self.viewing_menu:
+            self.hero.update()
+            self.hero.draw(self.screen)
+            self.get_event()
+            if self.hero.status != 'attack':
+                self.horizontal_move()
+                self.vertical_move()
+            self.diamond_collision()
+            self.door_collision()
+            self.scroll()
+            self.check_lose()
+            self.check_win()
+            self.enemy_cannon_hero_collision()
         self.cannon_ball_hero_collision()
-        if self.hero.status != 'attack':
-            self.horizontal_move()
-            self.vertical_move()
-        self.diamond_collision()
-        self.door_collision()
-        self.scroll()
-        self.hero.draw(self.screen)
-        self.check_finished_level()
 
     def update_ui(self):
         self.ui.render_health(self.hero.health)
         self.ui.render_text()
         self.ui.render_diamonds(self.cur_diamonds)
 
-    def render(self):
+    def render_level_events(self):
+        self.screen.fill((63, 56, 81))
         self.background_sprites.update()
         self.background_sprites.draw(self.screen)
 
@@ -297,6 +318,14 @@ class Level:
         self.enemies_sprites.draw(self.screen)
         self.enemy_block.update()
 
+        self.box_sprites.update()
+        self.box_sprites.draw(self.screen)
+
+        self.update_ui()
+
+        self.effects_sprites.update()
+        self.effects_sprites.draw(self.screen)
+
         self.cannon_sprites.update()
         self.cannon_sprites.draw(self.screen)
         self.check_cannon_shoot()
@@ -304,12 +333,9 @@ class Level:
         self.cannon_balls_sprites.update()
         self.cannon_balls_sprites.draw(self.screen)
 
-        self.box_sprites.update()
-        self.box_sprites.draw(self.screen)
-
-        self.update_ui()
-
         self.update_hero()
 
-        self.effects_sprites.update()
-        self.effects_sprites.draw(self.screen)
+    def render(self):
+        self.render_level_events()
+        if self.viewing_menu:
+            self.level_menu.render()
