@@ -2,30 +2,32 @@ import pygame
 from support import load_images
 
 
+# игрок
 class Hero(pygame.sprite.Sprite):
     def __init__(self, position):
         super().__init__()
-        self.import_animation_images()
-        self.image_index = 0
-        self.animation_speed = 0.15
+        self.import_animation_images()  # подгрузка всех картинок для анимации
+        self.image_index = 0  # текущая картинка
+        self.animation_speed = 0.15  # скорость анимации
         self.image = self.animations["idle"][self.image_index]
-        self.rect = self.image.get_rect(topleft=position)
+        self.rect = self.image.get_rect(topleft=position)  # устанавляваем позицию
 
-        self.direction = pygame.math.Vector2(0, 0)
-        self.speed = 6
-        self.gravity = 0.7
-        self.jump_speed = -10
-        self.health = 3
-        self.damage_time = 0
+        self.direction = pygame.math.Vector2(0, 0)  # направление игрока по x и y
+        self.speed = 6  # горизонтальная скорость
+        self.gravity = 0.7  # усиление гравитации
+        self.jump_speed = -10  # скорость прыжка
+        self.health = 3  # здоровье
+        self.damage_time = 0  # время до получения следующего урона
 
-        self.status = "idle"
-        self.facing_right = True
-        self.on_ground = False
-        self.on_ceiling = False
-        self.on_right = False
-        self.on_left = False
-        self.finished_level = False
+        self.status = "idle"  # текущее состояние (на месте, бег, прыжок, падение)
+        self.facing_right = True  # смотрит вправо
+        self.on_ground = False  # на земле
+        self.on_ceiling = False  # головой уперся в потолок
+        self.on_right = False  # уперся вправо
+        self.on_left = False  # уперся влево
+        self.finished_level = False  # закончил уровень
 
+    # подгрузка всех картинок для анимации
     def import_animation_images(self):
         self.animations = {"idle": list(), "jump": list(),
                            "run": list(), "fall": list(),
@@ -34,13 +36,16 @@ class Hero(pygame.sprite.Sprite):
         for condition in self.animations:
             self.animations[condition] = load_images("../graphics/character/" + condition + '/')
 
+    # прыжок
     def jump(self):
         self.direction.y = self.jump_speed
 
+    # падение за счет гравитации
     def use_gravity(self):
         self.direction.y += self.gravity
         self.rect.y += self.direction.y
 
+    # получение урона
     def get_damage(self):
         if not self.finished_level:
             self.damage_time = 2
@@ -48,6 +53,7 @@ class Hero(pygame.sprite.Sprite):
             self.jump()
             self.direction.x = -1
 
+    # обновление текущего состояния игрока
     def get_status(self):
         if self.status == 'attack':
             return
@@ -61,9 +67,11 @@ class Hero(pygame.sprite.Sprite):
         else:
             self.status = "idle"
 
+    # обновление времени до следующего получения урона
     def pass_damage_time(self):
         self.damage_time = max(self.damage_time - 0.02, 0)
 
+    # анимация
     def animate(self):
         self.get_status()
         animation = self.animations[self.status]
@@ -77,11 +85,15 @@ class Hero(pygame.sprite.Sprite):
             self.image_index %= len(animation)
 
         image = animation[int(self.image_index)]
+
+        # переворачиваем, если смотрит влево
         if self.facing_right:
             self.image = image
         else:
             self.image = pygame.transform.flip(image, flip_x=True, flip_y=False)
 
+        # картинки игрока имеют разную ширину и высоту
+        # это нужно, чтобы спрайт игрока не заходил на статичные спрайты
         if self.on_ground:
             if self.on_right:
                 self.rect = self.image.get_rect(bottomright=self.rect.bottomright)
@@ -101,5 +113,6 @@ class Hero(pygame.sprite.Sprite):
         self.pass_damage_time()
         self.animate()
 
+    # отрисовка игрока
     def draw(self, screen):
         screen.blit(self.image, self.rect)

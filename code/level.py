@@ -1,34 +1,40 @@
 import pygame
-
-from tile import *
+from settings import TILE_SIZE
+from tile import Tile, StaticTile, Diamond, Box
 from hero import Hero
-from support import *
-from enemy import *
+from support import import_csv, import_graphics
+from enemy import Pig
 from camera import Camera
 from ui import UI
 from door import Door
 from cannon import Cannon, CannonBall
 from effects import EnemyDestroyEffect, BombExplosionEffect
-from menu import WinLoseMenu
+from menu import WinLoseMenu, PauseMenu
 
 
+# класс уровня
+# тут происходит обработка всех событий от игрока, если находится в уровне
 class Level:
-    def __init__(self, level, screen, level_num, set_menu):
+    def __init__(self, level, screen, is_last, set_main_menu):
         self.screen = screen
-        self.camera = Camera()
-        self.ui = UI(self.screen)
-        self.total_pigs = 0
+        self.camera = Camera()  # камера, которая следит за игроком
+        self.ui = UI(self.screen)  # отображение здоровья и алмазов
+        self.total_pigs = 0  # количество свиней в уровне
         self.setup_level(level)
-        self.set_menu = set_menu
-        self.level_num = level_num
-        self.viewing_menu = False
+        # функция для установки главного меню, передается от класса Game при инициализации уровня
+        self.set_main_menu = set_main_menu
+        self.is_last = is_last  # последний уровень или нет
+        self.viewing_menu = False  # отображается финальное меню или нет
+        self.paused = False  # на паузе или нет
+        self.level_menu = None  # текущее меню
 
         self.cur_x = None
-        self.killed_pigs = 0
-        self.cur_diamonds = 0
-        self.colliding_door = False
-        self.finished_level = False
+        self.killed_pigs = 0  # количество убитых свиней
+        self.cur_diamonds = 0  # количество собранных алмазов
+        self.colliding_door = False  # игрок рядом с выходом или нет
+        self.finished_level = False  # закончил ли игрок прохождение уровня
 
+    # подгрузка всех спрайтов
     def setup_level(self, level):
         self.hero = None
         self.effects_sprites = pygame.sprite.Group()
@@ -45,10 +51,10 @@ class Level:
                                                       "diamonds")
         self.platform_sprites = self.create_tile_group(import_csv(level["default_platforms"]),
                                                        "default_platforms")
-        self.backgroud_door_sprite = self.create_tile_group(import_csv(level["background_door"]),
-                                                            "background_door")
-        self.active_door_sprite = self.create_tile_group(import_csv(level["door"]),
-                                                         "door")
+        self.start_door_sprite = self.create_tile_group(import_csv(level["start_door"]),
+                                                        "start_door")
+        self.final_door_sprite = self.create_tile_group(import_csv(level["final_door"]),
+                                                        "final_door")
         self.enemy_block = pygame.sprite.Group()
         self.enemies_sprites = self.create_tile_group(import_csv(level["pigs"]),
                                                       "pigs")
@@ -56,13 +62,15 @@ class Level:
         self.cannon_sprites = self.create_tile_group(import_csv(level["cannon"]),
                                                      "cannon")
 
+    # возвращает все спрайты, нужно для фокусирования камеры
     def get_all_sprites(self):
         return [self.hero] + self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
-               self.decoration_sprites.sprites() + self.box_sprites.sprites() + self.diamond_sprites.sprites() + \
-               self.platform_sprites.sprites() + self.backgroud_door_sprite.sprites() + \
-               self.effects_sprites.sprites() + self.cannon_sprites.sprites() + self.cannon_balls_sprites.sprites() + \
-               self.active_door_sprite.sprites() + self.enemy_block.sprites() + self.enemies_sprites.sprites()
+            self.decoration_sprites.sprites() + self.box_sprites.sprites() + self.diamond_sprites.sprites() + \
+            self.platform_sprites.sprites() + self.start_door_sprite.sprites() + \
+            self.effects_sprites.sprites() + self.cannon_sprites.sprites() + self.cannon_balls_sprites.sprites() + \
+            self.final_door_sprite.sprites() + self.enemy_block.sprites() + self.enemies_sprites.sprites()
 
+    # нарезает спрайты из картинок
     @staticmethod
     def define_tile_type(graphics_type):
         tiles = list()
@@ -76,6 +84,7 @@ class Level:
 
         return tiles
 
+    # создание отдельной группы спрайтов
     def create_tile_group(self, csv_data, graphics_type):
         sprite_group = pygame.sprite.Group()
         tiles = self.define_tile_type(graphics_type)
@@ -84,24 +93,25 @@ class Level:
             for col_ind, col in enumerate(row):
                 if col == -1:
                     continue
-                x, y = col_ind * TILE_SIZE, row_ind * TILE_SIZE
+                x, y = col_ind * TILE_SIZE, row_ind * TILE_SIZE  # позиция тайла
                 if graphics_type == "hero":
                     tile = Hero((x, y))
                     self.hero = tile
                     return
-                elif graphics_type == "box":
+                elif graphics_type == "box":  # коробка
                     tile = Box((x, y))
                     sprite_group.add(tile)
-                elif graphics_type == "diamonds":
+                elif graphics_type == "diamonds":  # алмаз
                     tile = Diamond((x, y))
                     sprite_group.add(tile)
-                elif graphics_type == "background_door":
+                elif graphics_type == "start_door":  # стартовая дверь
                     tile = Door((x, y), False)
                     sprite_group.add(tile)
-                elif graphics_type == "door":
+                elif graphics_type == "final_door":  # финальная дверь (выход с уровня)
                     tile = Door((x, y), True)
                     sprite_group.add(tile)
-                elif graphics_type == "pigs":
+                elif graphics_type == "pigs":  # свинья (враг)
+                    # если col == 1, то это именно враг, иначе это блок, ограничивающий движение врага
                     if col:
                         tile = Pig((x, y))
                         sprite_group.add(tile)
@@ -109,45 +119,54 @@ class Level:
                     else:
                         tile = Tile((x, y), tile_size=TILE_SIZE)
                         self.enemy_block.add(tile)
-                elif graphics_type == "cannon":
+                elif graphics_type == "cannon":  # пушка
                     tile = Cannon((x, y))
                     sprite_group.add(tile)
-                else:
+                else:  # иначе это просто статичный блок, например terrain или default_platform
+                    # они уже подгружены в функции define_tile_type
                     tile = tiles[col]
                     sprite_group.add(StaticTile((x, y), tile))
 
         return sprite_group
 
+    # столкновение врагов с блоками-ограничителями движения
     def enemy_block_collision(self):
         for enemy in self.enemies_sprites.sprites():
             if pygame.sprite.spritecollide(enemy, self.enemy_block, dokill=False):
-                enemy.reverse()
+                enemy.reverse()  # разворачиваем врага
 
+    # столкновение игрока с врагом или пушкой
     def enemy_cannon_hero_collision(self):
         hero = self.hero
 
         collide_sprites = self.enemies_sprites.sprites() + self.cannon_sprites.sprites()
         for sprite in collide_sprites:
             if sprite.rect.colliderect(hero):
+                # если игрок атакует, то разрушаем врага или пушку
                 if hero.status == 'attack':
                     if type(sprite) == Pig:
                         self.killed_pigs += 1
                     else:
+                        # эффект взрыва пушки
                         self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
                     sprite.kill()
-                elif hero.damage_time == 0:
+                elif hero.damage_time == 0:  # если игроку не наносили урон недавно
+                    # проверяем, получает игрок урон или уничтожает объект прыжком
                     if sprite.rect.top < hero.rect.bottom <= sprite.rect.centery and hero.direction.y > 0:
                         hero.jump()
                         if type(sprite) == Pig:
                             self.killed_pigs += 1
                         else:
+                            # опять эффект взрыва
                             self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
                         sprite.kill()
-                    elif type(sprite) == Pig:
+                    elif type(sprite) == Pig:  # если игрок не наносит урон и сталкивается с врагом, он его получает
                         hero.get_damage()
 
+    # столкновение игрока и шара от пушки
+    # или столкновение шара от пушки и стены
     def cannon_ball_hero_collision(self):
-        if self.finished_level:
+        if self.finished_level:  # если игрок дошел до конца уровня, больше не проверяем
             return
 
         hero = self.hero
@@ -155,17 +174,20 @@ class Level:
             collide_hero = hero.rect.colliderect(ball)
             collide_terrain = pygame.sprite.spritecollideany(ball, self.terrain_sprites)
             if collide_terrain or (collide_hero and not self.viewing_menu):
-                if collide_hero:
+                if collide_hero:  # если он сталкивается с игроком, игрок получает урон
                     hero.get_damage()
+                # ээфект взрыва шара
                 self.effects_sprites.add(BombExplosionEffect(ball.rect.center))
                 ball.kill()
 
+    # игрок находится рядом с финальной дверью
     def door_collision(self):
-        if pygame.sprite.spritecollide(self.hero, self.active_door_sprite, dokill=False):
-            self.colliding_door = self.active_door_sprite.sprites()[0]
+        if pygame.sprite.spritecollide(self.hero, self.final_door_sprite, dokill=False):
+            self.colliding_door = self.final_door_sprite.sprites()[0]
         else:
             self.colliding_door = False
 
+    # игрок собирает алмазы
     def diamond_collision(self):
         hero = self.hero
 
@@ -174,31 +196,37 @@ class Level:
                 diamond.kill()
                 self.cur_diamonds += 1
 
+    # проверка, стреляет ли пушка
     def check_cannon_shoot(self):
         for cannon in self.cannon_sprites.sprites():
             if int(cannon.image_index) == 2 and not cannon.shot:
+                # если сейчас нужный нам индекс анимации, и пушка еще не стреляла на текущей анимации
                 position = cannon.rect.topleft
                 cannon.shot = True
                 self.cannon_balls_sprites.add(CannonBall(position))
 
+    # проверка, прошел ли игрок уровень
     def check_win(self):
-        self.finished_level = self.colliding_door and \
-                              self.colliding_door.finished_animation
-        if self.level_num == "last" and self.finished_level:
-            self.level_menu = WinLoseMenu(self.screen, "win", self.set_menu)
+        # если игрок рядом с дверью и дверь открыта
+        self.finished_level = self.colliding_door and self.colliding_door.finished_animation
+        if self.is_last and self.finished_level:  # если игрок прошел игру (последний уровень завершен)
+            self.level_menu = WinLoseMenu(self.screen, "win", self.set_main_menu)
             self.viewing_menu = True
 
+    # если игрок умер
     def check_lose(self):
         if self.hero.health == 0:
-            self.level_menu = WinLoseMenu(self.screen, "lose", self.set_menu)
+            self.level_menu = WinLoseMenu(self.screen, "lose", self.set_main_menu)
             self.viewing_menu = True
             self.update_ui()
 
-    def scroll(self):
+    # фокусировка камеры
+    def focus_camera(self):
         self.camera.update(self.hero)
         for sprite in self.get_all_sprites():
             self.camera.apply(sprite)
 
+    # движение игрока по горизонтали
     def horizontal_move(self):
         hero = self.hero
         hero.rect.x += hero.direction.x * hero.speed
@@ -206,11 +234,11 @@ class Level:
         tiles_group = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
         for tile in tiles_group:
             if tile.rect.colliderect(hero.rect):
-                if hero.direction.x < 0:
+                if hero.direction.x < 0:  # если игрок столкнулся с чем то, пока шел влево
                     hero.rect.left = tile.rect.right
                     hero.on_left = True
                     self.cur_x = hero.rect.left
-                elif hero.direction.x > 0:
+                elif hero.direction.x > 0:  # пока шел вправо
                     hero.rect.right = tile.rect.left
                     hero.on_right = True
                     self.cur_x = hero.rect.right
@@ -220,6 +248,7 @@ class Level:
         if hero.on_right and (hero.rect.right > self.cur_x or hero.direction.x <= 0):
             hero.on_right = False
 
+    # движение игрока по вертикали
     def vertical_move(self):
         hero = self.hero
         hero.use_gravity()
@@ -227,11 +256,11 @@ class Level:
         tiles_group = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
         for tile in tiles_group:
             if tile.rect.colliderect(hero.rect):
-                if hero.direction.y > 0:
+                if hero.direction.y > 0:  # столкнулся пока падал
                     hero.rect.bottom = tile.rect.top
                     hero.on_ground = True
                     hero.on_ceiling = False
-                elif hero.direction.y < 0:
+                elif hero.direction.y < 0:  # столкнулся пока был в прыжке
                     hero.rect.top = tile.rect.bottom
                     hero.on_ceiling = True
                     hero.on_ground = False
@@ -242,11 +271,15 @@ class Level:
         if hero.on_ceiling and hero.direction.y > 0:
             hero.on_ceiling = False
 
+    # отлавливаем эвенты в уровня
     def get_event(self):
-        if self.finished_level or self.viewing_menu:
+        if self.finished_level or self.viewing_menu or self.paused or \
+                (self.colliding_door and self.colliding_door.animation_started):
             return
 
         keys = pygame.key.get_pressed()
+
+        # движение по горизонтали
         if keys[pygame.K_RIGHT]:
             self.hero.direction.x = 1
             self.hero.facing_right = True
@@ -256,19 +289,29 @@ class Level:
         else:
             self.hero.direction.x = 0
 
-        if keys[pygame.K_SPACE] and self.hero.on_ground:
+        if keys[pygame.K_SPACE] and self.hero.on_ground:  # прыжок
             self.hero.jump()
-        if keys[pygame.K_e] and self.hero.on_ground:
+        if keys[pygame.K_e] and self.hero.on_ground:  # атака
             self.hero.status = "attack"
-        if keys[pygame.K_q] and self.colliding_door:
+        if keys[pygame.K_q] and self.colliding_door:  # завершение уровня
             if self.total_pigs == self.killed_pigs:
                 self.colliding_door.start_animation()
             else:
                 self.ui.set_current_text("kill all pigs to finish level")
+        if keys[pygame.K_ESCAPE] and not self.paused:  # пауза
+            self.set_pause()
 
+    # перенаправляем эвенты в менюшку уровня
     def get_menu_event(self, event):
         self.level_menu.get_event(event)
 
+    # ставим игру на паузу
+    def set_pause(self):
+        self.paused = not self.paused
+        if self.paused:
+            self.level_menu = PauseMenu(self.screen, self.set_pause, self.set_main_menu)
+
+    # обновляем игрока
     def update_hero(self):
         if not self.viewing_menu:
             self.hero.update()
@@ -279,17 +322,19 @@ class Level:
                 self.vertical_move()
             self.diamond_collision()
             self.door_collision()
-            self.scroll()
+            self.focus_camera()
             self.check_lose()
             self.check_win()
             self.enemy_cannon_hero_collision()
         self.cannon_ball_hero_collision()
 
+    # обновляем отображение здоровья и алмазов
     def update_ui(self):
         self.ui.render_health(self.hero.health)
         self.ui.render_text()
         self.ui.render_diamonds(self.cur_diamonds)
 
+    # отрисовка всех спрайтов
     def render_level_events(self):
         self.screen.fill((63, 56, 81))
         self.background_sprites.update()
@@ -307,11 +352,11 @@ class Level:
         self.platform_sprites.update()
         self.platform_sprites.draw(self.screen)
 
-        self.backgroud_door_sprite.update()
-        self.backgroud_door_sprite.draw(self.screen)
+        self.start_door_sprite.update()
+        self.start_door_sprite.draw(self.screen)
 
-        self.active_door_sprite.update()
-        self.active_door_sprite.draw(self.screen)
+        self.final_door_sprite.update()
+        self.final_door_sprite.draw(self.screen)
 
         self.enemies_sprites.update()
         self.enemy_block_collision()
@@ -335,7 +380,9 @@ class Level:
 
         self.update_hero()
 
+    # рендеринг уроавня в зависимости от состояния
     def render(self):
-        self.render_level_events()
-        if self.viewing_menu:
-            self.level_menu.render()
+        if not self.paused:
+            self.render_level_events()
+            if self.viewing_menu:
+                self.level_menu.render()

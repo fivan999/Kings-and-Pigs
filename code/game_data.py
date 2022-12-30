@@ -7,8 +7,8 @@ level_1 = {
     "pigs": "../levels/lvl1/lvl1_Enemy.csv",
     "default_platforms": "../levels/lvl1/lvl1_Default_platforms.csv",
     "background": "../levels/lvl1/lvl1_Background.csv",
-    "door": "../levels/lvl1/lvl1_Door.csv",
-    "background_door": "../levels/lvl1/lvl1_Background_door.csv",
+    "final_door": "../levels/lvl1/lvl1_Door.csv",
+    "start_door": "../levels/lvl1/lvl1_Background_door.csv",
     "cannon": "../levels/lvl1/lvl1_Cannon.csv"
 }
 
@@ -22,8 +22,8 @@ level_2 = {
     "pigs": "../levels/lvl2/lvl2_Enemy.csv",
     "default_platforms": "../levels/lvl2/lvl2_Default_platforms.csv",
     "background": "../levels/lvl2/lvl2_Background.csv",
-    "door": "../levels/lvl2/lvl2_Door.csv",
-    "background_door": "../levels/lvl2/lvl2_Background_door.csv",
+    "final_door": "../levels/lvl2/lvl2_Door.csv",
+    "start_door": "../levels/lvl2/lvl2_Background_door.csv",
     "cannon": "../levels/lvl2/lvl2_Cannon.csv"
 }
 

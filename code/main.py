@@ -5,6 +5,7 @@ from game import Game
 from game_data import levels
 
 
+# базовая инициализация pygame
 def main():
     pygame.init()
     pygame.display.set_caption("Kings & Pigs")
@@ -12,7 +13,7 @@ def main():
     screen = pygame.display.set_mode(SCREEN_SIZE)
 
     clock = pygame.time.Clock()
-    game = Game(levels, screen)
+    game = Game(levels, screen)  # экземпляр класса самой игры
 
     running = True
     while running:
@@ -21,9 +22,9 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            game.get_event(event)
+            game.get_event(event)  # ловим события через класс игры
 
-        game.render()
+        game.render()  # рендер игры
         pygame.display.flip()
 
     pygame.quit()

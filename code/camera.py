@@ -2,7 +2,7 @@ from settings import SCREEN_SIZE
 
 
 class Camera:
-    # зададим начальный сдвиг камеры
+    # начальный сдвиг камеры
     def __init__(self):
         self.dx = 0
         self.dy = 0
