@@ -28,7 +28,6 @@ class Level:
         self.paused = False  # на паузе или нет
         self.level_menu = None  # текущее меню
 
-        self.cur_x = None
         self.killed_pigs = 0  # количество убитых свиней
         self.cur_diamonds = 0  # количество собранных алмазов
         self.colliding_door = False  # игрок рядом с выходом или нет
@@ -64,7 +63,7 @@ class Level:
 
     # возвращает все спрайты, нужно для фокусирования камеры
     def get_all_sprites(self):
-        return [self.hero] + self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
+        return self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
             self.decoration_sprites.sprites() + self.box_sprites.sprites() + self.diamond_sprites.sprites() + \
             self.platform_sprites.sprites() + self.start_door_sprite.sprites() + \
             self.effects_sprites.sprites() + self.cannon_sprites.sprites() + self.cannon_balls_sprites.sprites() + \
@@ -95,7 +94,7 @@ class Level:
                     continue
                 x, y = col_ind * TILE_SIZE, row_ind * TILE_SIZE  # позиция тайла
                 if graphics_type == "hero":
-                    tile = Hero((x, y))
+                    tile = Hero((x + 32, y - 32))
                     self.hero = tile
                     return
                 elif graphics_type == "box":  # коробка
@@ -141,7 +140,7 @@ class Level:
 
         collide_sprites = self.enemies_sprites.sprites() + self.cannon_sprites.sprites()
         for sprite in collide_sprites:
-            if sprite.rect.colliderect(hero):
+            if sprite.rect.colliderect(hero.rect):
                 # если игрок атакует, то разрушаем врага или пушку
                 if hero.status == 'attack':
                     if type(sprite) == Pig:
@@ -151,8 +150,8 @@ class Level:
                         self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
                     sprite.kill()
                 elif hero.damage_time == 0:  # если игроку не наносили урон недавно
-                    # проверяем, получает игрок урон или уничтожает объект прыжком
-                    if sprite.rect.top < hero.rect.bottom <= sprite.rect.centery and hero.direction.y > 0:
+                    # проверяем, уничтожает ли игрок объект прыжком
+                    if sprite.rect.top < hero.rect.bottom < sprite.rect.bottom and hero.direction.y > 0:
                         hero.jump()
                         if type(sprite) == Pig:
                             self.killed_pigs += 1
@@ -160,7 +159,7 @@ class Level:
                             # опять эффект взрыва
                             self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
                         sprite.kill()
-                    elif type(sprite) == Pig:  # если игрок не наносит урон и сталкивается с врагом, он его получает
+                    elif type(sprite) == Pig and sprite.rect.colliderect(hero.terrain_collision_rect):
                         hero.get_damage()
 
     # столкновение игрока и шара от пушки
@@ -171,7 +170,7 @@ class Level:
 
         hero = self.hero
         for ball in self.cannon_balls_sprites.sprites():
-            collide_hero = hero.rect.colliderect(ball)
+            collide_hero = hero.terrain_collision_rect.colliderect(ball)
             collide_terrain = pygame.sprite.spritecollideany(ball, self.terrain_sprites)
             if collide_terrain or (collide_hero and not self.viewing_menu):
                 if collide_hero:  # если он сталкивается с игроком, игрок получает урон
@@ -192,7 +191,7 @@ class Level:
         hero = self.hero
 
         for diamond in self.diamond_sprites.sprites():
-            if diamond.rect.colliderect(hero):
+            if diamond.rect.colliderect(hero.rect):
                 diamond.kill()
                 self.cur_diamonds += 1
 
@@ -229,24 +228,17 @@ class Level:
     # движение игрока по горизонтали
     def horizontal_move(self):
         hero = self.hero
-        hero.rect.x += hero.direction.x * hero.speed
+        hero.terrain_collision_rect.x += hero.direction.x * hero.speed
 
         tiles_group = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
         for tile in tiles_group:
-            if tile.rect.colliderect(hero.rect):
+            if tile.rect.colliderect(hero.terrain_collision_rect):
                 if hero.direction.x < 0:  # если игрок столкнулся с чем то, пока шел влево
-                    hero.rect.left = tile.rect.right
+                    hero.terrain_collision_rect.left = tile.rect.right
                     hero.on_left = True
-                    self.cur_x = hero.rect.left
                 elif hero.direction.x > 0:  # пока шел вправо
-                    hero.rect.right = tile.rect.left
+                    hero.terrain_collision_rect.right = tile.rect.left
                     hero.on_right = True
-                    self.cur_x = hero.rect.right
-
-        if hero.on_left and (hero.rect.left < self.cur_x or hero.direction.x >= 0):
-            hero.on_left = False
-        if hero.on_right and (hero.rect.right > self.cur_x or hero.direction.x <= 0):
-            hero.on_right = False
 
     # движение игрока по вертикали
     def vertical_move(self):
@@ -255,21 +247,17 @@ class Level:
 
         tiles_group = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
         for tile in tiles_group:
-            if tile.rect.colliderect(hero.rect):
+            if tile.rect.colliderect(hero.terrain_collision_rect):
                 if hero.direction.y > 0:  # столкнулся пока падал
-                    hero.rect.bottom = tile.rect.top
+                    hero.terrain_collision_rect.bottom = tile.rect.top
                     hero.on_ground = True
-                    hero.on_ceiling = False
                 elif hero.direction.y < 0:  # столкнулся пока был в прыжке
-                    hero.rect.top = tile.rect.bottom
-                    hero.on_ceiling = True
+                    hero.terrain_collision_rect.top = tile.rect.bottom
                     hero.on_ground = False
                 hero.direction.y = 0
 
         if hero.on_ground and hero.direction.y < 0 or hero.direction.y > 1:
             hero.on_ground = False
-        if hero.on_ceiling and hero.direction.y > 0:
-            hero.on_ceiling = False
 
     # отлавливаем эвенты в уровня
     def get_event(self):
@@ -291,7 +279,7 @@ class Level:
 
         if keys[pygame.K_SPACE] and self.hero.on_ground:  # прыжок
             self.hero.jump()
-        if keys[pygame.K_e] and self.hero.on_ground:  # атака
+        elif keys[pygame.K_e] and self.hero.on_ground and self.hero.status != "attack":  # атака
             self.hero.status = "attack"
         if keys[pygame.K_q] and self.colliding_door:  # завершение уровня
             if self.total_pigs == self.killed_pigs:
@@ -316,6 +304,7 @@ class Level:
         if not self.viewing_menu:
             self.hero.update()
             self.hero.draw(self.screen)
+            self.enemy_cannon_hero_collision()
             self.get_event()
             if self.hero.status != 'attack':
                 self.horizontal_move()
@@ -325,7 +314,6 @@ class Level:
             self.focus_camera()
             self.check_lose()
             self.check_win()
-            self.enemy_cannon_hero_collision()
         self.cannon_ball_hero_collision()
 
     # обновляем отображение здоровья и алмазов

@@ -11,6 +11,8 @@ class Hero(pygame.sprite.Sprite):
         self.animation_speed = 0.15  # скорость анимации
         self.image = self.animations["idle"][self.image_index]
         self.rect = self.image.get_rect(topleft=position)  # устанавляваем позицию
+        # для столкновений с клетками нам нужен другой квадрат, потому что часть предыдущего это кувалда
+        self.terrain_collision_rect = pygame.Rect((self.rect.left + 12, self.rect.top), (25, self.rect.height))
 
         self.direction = pygame.math.Vector2(0, 0)  # направление игрока по x и y
         self.speed = 6  # горизонтальная скорость
@@ -18,14 +20,14 @@ class Hero(pygame.sprite.Sprite):
         self.jump_speed = -10  # скорость прыжка
         self.health = 3  # здоровье
         self.damage_time = 0  # время до получения следующего урона
+        self.fixed_height = 26
 
-        self.status = "idle"  # текущее состояние (на месте, бег, прыжок, падение)
+        self.status = "idle"  # текущее состояние (на месте, бег, прыжок, падение, атака)
         self.facing_right = True  # смотрит вправо
         self.on_ground = False  # на земле
-        self.on_ceiling = False  # головой уперся в потолок
-        self.on_right = False  # уперся вправо
-        self.on_left = False  # уперся влево
         self.finished_level = False  # закончил уровень
+        self.on_left = False
+        self.on_right = False
 
     # подгрузка всех картинок для анимации
     def import_animation_images(self):
@@ -43,7 +45,7 @@ class Hero(pygame.sprite.Sprite):
     # падение за счет гравитации
     def use_gravity(self):
         self.direction.y += self.gravity
-        self.rect.y += self.direction.y
+        self.terrain_collision_rect.y += self.direction.y
 
     # получение урона
     def get_damage(self):
@@ -84,30 +86,16 @@ class Hero(pygame.sprite.Sprite):
                 return
             self.image_index %= len(animation)
 
-        image = animation[int(self.image_index)]
+        self.image = animation[int(self.image_index)]
 
         # переворачиваем, если смотрит влево
         if self.facing_right:
-            self.image = image
+            self.rect.bottomright = self.terrain_collision_rect.bottomright
         else:
-            self.image = pygame.transform.flip(image, flip_x=True, flip_y=False)
+            self.image = pygame.transform.flip(self.image, flip_x=True, flip_y=False)
+            self.rect.bottomleft = self.terrain_collision_rect.bottomleft
 
-        # картинки игрока имеют разную ширину и высоту
-        # это нужно, чтобы спрайт игрока не заходил на статичные спрайты
-        if self.on_ground:
-            if self.on_right:
-                self.rect = self.image.get_rect(bottomright=self.rect.bottomright)
-            elif self.on_left:
-                self.rect = self.image.get_rect(bottomleft=self.rect.bottomleft)
-            else:
-                self.rect = self.image.get_rect(midbottom=self.rect.midbottom)
-        elif self.on_ceiling:
-            if self.on_right:
-                self.rect = self.image.get_rect(topright=self.rect.topright)
-            elif self.on_left:
-                self.rect = self.image.get_rect(topleft=self.rect.topleft)
-            else:
-                self.rect = self.image.get_rect(midtop=self.rect.midtop)
+        self.rect = self.image.get_rect(midbottom=self.rect.midbottom)
 
     def update(self):
         self.pass_damage_time()
