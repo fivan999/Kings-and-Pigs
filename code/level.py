@@ -21,10 +21,11 @@ class Level:
         self.ui = UI(self.screen)  # отображение здоровья и алмазов
         self.total_pigs = 0  # количество свиней в уровне
         self.setup_level(level)
+        self.setup_audio()
         # функция для установки главного меню, передается от класса Game при инициализации уровня
         self.set_main_menu = set_main_menu
         self.is_last = is_last  # последний уровень или нет
-        self.viewing_menu = False  # отображается финальное меню или нет
+        self.viewing_final_menu = False  # отображается финальное меню или нет
         self.paused = False  # на паузе или нет
         self.level_menu = None  # текущее меню
 
@@ -32,6 +33,14 @@ class Level:
         self.cur_diamonds = 0  # количество собранных алмазов
         self.colliding_door = False  # игрок рядом с выходом или нет
         self.finished_level = False  # закончил ли игрок прохождение уровня
+
+    # подгрузка звуковых эффектов для уровня
+    def setup_audio(self):
+        self.diamond_sound = pygame.mixer.Sound("../sounds/diamond.wav")
+        self.pig_die_sound = pygame.mixer.Sound("../sounds/pig/die.mp3")
+        self.cannon_shot_sound = pygame.mixer.Sound("../sounds/cannon_shot.wav")
+        self.bomb_boom_sound = pygame.mixer.Sound("../sounds/bomb_boom_sound.wav")
+        self.bomb_boom_sound.set_volume(0.5)
 
     # подгрузка всех спрайтов
     def setup_level(self, level):
@@ -94,7 +103,7 @@ class Level:
                     continue
                 x, y = col_ind * TILE_SIZE, row_ind * TILE_SIZE  # позиция тайла
                 if graphics_type == "hero":
-                    tile = Hero((x + 32, y - 32))
+                    tile = Hero((x, y))
                     self.hero = tile
                     return
                 elif graphics_type == "box":  # коробка
@@ -145,9 +154,11 @@ class Level:
                 if hero.status == 'attack':
                     if type(sprite) == Pig:
                         self.killed_pigs += 1
+                        self.pig_die_sound.play()
                     else:
                         # эффект взрыва пушки
                         self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
+                        self.bomb_boom_sound.play()
                     sprite.kill()
                 elif hero.damage_time == 0:  # если игроку не наносили урон недавно
                     # проверяем, уничтожает ли игрок объект прыжком
@@ -155,9 +166,11 @@ class Level:
                         hero.jump()
                         if type(sprite) == Pig:
                             self.killed_pigs += 1
+                            self.pig_die_sound.play()
                         else:
                             # опять эффект взрыва
                             self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
+                            self.bomb_boom_sound.play()
                         sprite.kill()
                     elif type(sprite) == Pig and sprite.rect.colliderect(hero.terrain_collision_rect):
                         hero.get_damage()
@@ -172,11 +185,12 @@ class Level:
         for ball in self.cannon_balls_sprites.sprites():
             collide_hero = hero.terrain_collision_rect.colliderect(ball)
             collide_terrain = pygame.sprite.spritecollideany(ball, self.terrain_sprites)
-            if collide_terrain or (collide_hero and not self.viewing_menu):
+            if collide_terrain or (collide_hero and not self.viewing_final_menu):
                 if collide_hero:  # если он сталкивается с игроком, игрок получает урон
                     hero.get_damage()
                 # ээфект взрыва шара
                 self.effects_sprites.add(BombExplosionEffect(ball.rect.center))
+                self.bomb_boom_sound.play()
                 ball.kill()
 
     # игрок находится рядом с финальной дверью
@@ -194,6 +208,7 @@ class Level:
             if diamond.rect.colliderect(hero.rect):
                 diamond.kill()
                 self.cur_diamonds += 1
+                self.diamond_sound.play()
 
     # проверка, стреляет ли пушка
     def check_cannon_shoot(self):
@@ -203,6 +218,7 @@ class Level:
                 position = cannon.rect.topleft
                 cannon.shot = True
                 self.cannon_balls_sprites.add(CannonBall(position))
+                self.cannon_shot_sound.play()
 
     # проверка, прошел ли игрок уровень
     def check_win(self):
@@ -210,13 +226,13 @@ class Level:
         self.finished_level = self.colliding_door and self.colliding_door.finished_animation
         if self.is_last and self.finished_level:  # если игрок прошел игру (последний уровень завершен)
             self.level_menu = WinLoseMenu(self.screen, "win", self.set_main_menu)
-            self.viewing_menu = True
+            self.viewing_final_menu = True
 
     # если игрок умер
     def check_lose(self):
         if self.hero.health == 0:
             self.level_menu = WinLoseMenu(self.screen, "lose", self.set_main_menu)
-            self.viewing_menu = True
+            self.viewing_final_menu = True
             self.update_ui()
 
     # фокусировка камеры
@@ -259,9 +275,9 @@ class Level:
         if hero.on_ground and hero.direction.y < 0 or hero.direction.y > 1:
             hero.on_ground = False
 
-    # отлавливаем эвенты в уровня
+    # отлавливаем эвенты с зажатой клавишей
     def get_event(self):
-        if self.finished_level or self.viewing_menu or self.paused or \
+        if self.finished_level or self.viewing_final_menu or self.paused or \
                 (self.colliding_door and self.colliding_door.animation_started):
             return
 
@@ -279,7 +295,7 @@ class Level:
 
         if keys[pygame.K_SPACE] and self.hero.on_ground:  # прыжок
             self.hero.jump()
-        elif keys[pygame.K_e] and self.hero.on_ground and self.hero.status != "attack":  # атака
+        elif keys[pygame.K_e] and self.hero.on_ground and self.hero.status == "idle":  # атака
             self.hero.status = "attack"
         if keys[pygame.K_q] and self.colliding_door:  # завершение уровня
             if self.total_pigs == self.killed_pigs:
@@ -289,10 +305,6 @@ class Level:
         if keys[pygame.K_ESCAPE] and not self.paused:  # пауза
             self.set_pause()
 
-    # перенаправляем эвенты в менюшку уровня
-    def get_menu_event(self, event):
-        self.level_menu.get_event(event)
-
     # ставим игру на паузу
     def set_pause(self):
         self.paused = not self.paused
@@ -301,7 +313,7 @@ class Level:
 
     # обновляем игрока
     def update_hero(self):
-        if not self.viewing_menu:
+        if not self.viewing_final_menu:
             self.hero.update()
             self.hero.draw(self.screen)
             self.enemy_cannon_hero_collision()
@@ -322,7 +334,7 @@ class Level:
         self.ui.render_text()
         self.ui.render_diamonds(self.cur_diamonds)
 
-    # отрисовка всех спрайтов
+    # обновление и отрисовка всех спрайтов
     def render_level_events(self):
         self.screen.fill((63, 56, 81))
         self.background_sprites.update()
@@ -372,5 +384,5 @@ class Level:
     def render(self):
         if not self.paused:
             self.render_level_events()
-            if self.viewing_menu:
+            if self.viewing_final_menu:
                 self.level_menu.render()

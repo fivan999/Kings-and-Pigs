@@ -13,9 +13,11 @@ class Door(StaticTile):
         if is_final:
             img = pygame.image.load(Door.path_closed).convert_alpha()
             self.images = load_images("../graphics/door/opening/")
+            self.sound = pygame.mixer.Sound("../sounds/door/open.wav")
         else:
             img = pygame.image.load(Door.path_opened).convert_alpha()
             self.images = load_images("../graphics/door/closing/")
+            self.sound = pygame.mixer.Sound("../sounds/door/close.wav")
 
         super().__init__(position, img)
         self.is_final = is_final
@@ -35,6 +37,7 @@ class Door(StaticTile):
             self.image_index = 0  # текущая картинка
             self.animation_speed = 0.15
             self.image = self.images[self.image_index]
+            self.sound.play()
 
     # сама анимация
     def animate(self):

@@ -14,20 +14,25 @@ class Hero(pygame.sprite.Sprite):
         # для столкновений с клетками нам нужен другой квадрат, потому что часть предыдущего это кувалда
         self.terrain_collision_rect = pygame.Rect((self.rect.left + 12, self.rect.top), (25, self.rect.height))
 
+        # основные механики
         self.direction = pygame.math.Vector2(0, 0)  # направление игрока по x и y
-        self.speed = 6  # горизонтальная скорость
+        self.speed = 4  # горизонтальная скорость
         self.gravity = 0.7  # усиление гравитации
         self.jump_speed = -10  # скорость прыжка
         self.health = 3  # здоровье
         self.damage_time = 0  # время до получения следующего урона
-        self.fixed_height = 26
+        self.fixed_height = 26  # высоты картинок разные, для камеры используем эту
 
+        # флаги
         self.status = "idle"  # текущее состояние (на месте, бег, прыжок, падение, атака)
         self.facing_right = True  # смотрит вправо
         self.on_ground = False  # на земле
         self.finished_level = False  # закончил уровень
-        self.on_left = False
-        self.on_right = False
+
+        # звуки
+        self.jump_sound = pygame.mixer.Sound("../sounds/hero/jump.mp3")
+        self.get_damage_sound = pygame.mixer.Sound("../sounds/hero/get_damage.mp3")
+        self.attack_sound = pygame.mixer.Sound("../sounds/hero/attack.mp3")
 
     # подгрузка всех картинок для анимации
     def import_animation_images(self):
@@ -41,6 +46,7 @@ class Hero(pygame.sprite.Sprite):
     # прыжок
     def jump(self):
         self.direction.y = self.jump_speed
+        self.jump_sound.play()
 
     # падение за счет гравитации
     def use_gravity(self):
@@ -54,6 +60,7 @@ class Hero(pygame.sprite.Sprite):
             self.health = max(self.health - 1, 0)
             self.jump()
             self.direction.x = -1
+            self.get_damage_sound.play()
 
     # обновление текущего состояния игрока
     def get_status(self):

@@ -1,4 +1,5 @@
 import pygame
+from random import randint
 from tile import AnimatedTile
 from settings import TILE_SIZE
 
@@ -11,6 +12,7 @@ class Pig(AnimatedTile):
         self.rect.y += TILE_SIZE - self.image.get_height() - 1
 
         self.direction = -1  # направление движения врага
+        self.speed = randint(1, 2)
         self.back_move = False  # если враг направлен вправо
 
     # разворот
@@ -20,7 +22,7 @@ class Pig(AnimatedTile):
 
     # перемещение врага
     def move(self):
-        self.rect.x += self.direction
+        self.rect.x += self.direction * self.speed
 
     def update(self):
         super().update()
