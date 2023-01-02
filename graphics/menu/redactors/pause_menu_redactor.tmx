@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="9" height="7" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="1">
+<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="9" height="7" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="1">
  <tileset firstgid="1" source="../tilesets/terrain.tsx"/>
  <tileset firstgid="177" source="../tilesets/setup_enemy.tsx"/>
  <tileset firstgid="179" source="../tilesets/cannon.tsx"/>
  <tileset firstgid="180" source="../tilesets/decorations.tsx"/>
+ <tileset firstgid="200" source="../tilesets/default_platforms.tsx"/>
+ <tileset firstgid="204" source="../tilesets/hero_idle.tsx"/>
  <layer id="1" name="Слой тайлов 1" width="9" height="7">
   <data encoding="csv">
 1,2,2,2,2,2,2,2,3,
@@ -17,12 +19,23 @@
  </layer>
  <layer id="2" name="Слой тайлов 2" width="9" height="7">
   <data encoding="csv">
+5,34,34,34,34,34,34,34,6,
+19,180,0,0,0,0,0,0,17,
+19,185,0,0,0,0,0,0,17,
+19,195,0,0,0,0,178,0,17,
+19,0,0,0,0,0,0,0,17,
+19,0,2147483826,0,204,0,179,0,17,
+21,2,2,2,2,2,2,2,22
+</data>
+ </layer>
+ <layer id="3" name="Слой тайлов 3" width="9" height="7" offsetx="0" offsety="-17">
+  <data encoding="csv">
 0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,180,0,
-0,0,178,0,0,0,0,195,0,
-0,0,189,0,0,0,0,0,0,
-0,178,0,0,0,0,179,0,0,
+0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,203,0,0,
+0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0
 </data>
  </layer>

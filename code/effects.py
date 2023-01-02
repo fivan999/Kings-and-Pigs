@@ -2,17 +2,19 @@ import pygame
 from support import load_images
 
 
+# базовый эффект, уничтожающийся после окончания анимации
 class BaseEffect(pygame.sprite.Sprite):
     def __init__(self, position, path):
         super().__init__()
-        self.image_index = 0
-        self.animation_speed = 0.3
-        self.images = load_images(path)
+        self.image_index = 0  # текущая картинка
+        self.animation_speed = 0.3  # скорость анимации
+        self.images = load_images(path)  # картинки для анимации
         self.image = self.images[self.image_index]
-        self.rect = self.image.get_rect(center=position)
+        self.rect = self.image.get_rect(center=position)  # позиция эффекта
 
+    # анимация
     def animate(self):
-        if self.image_index >= len(self.images):
+        if self.image_index >= len(self.images):  # если анимация закончилась
             self.kill()
             return
         self.image = self.images[int(self.image_index)]
@@ -23,10 +25,13 @@ class BaseEffect(pygame.sprite.Sprite):
 
 
 class EnemyDestroyEffect(BaseEffect):
-    path = '../graphics/explosion/'
+    path = '../graphics/enemies/die/'
 
     def __init__(self, position):
         super().__init__(position, EnemyDestroyEffect.path)
+        self.animation_speed = 0.05
+        self.rect = self.image.get_rect(bottomleft=position)
+        self.rect.y += 3
 
 
 class BombExplosionEffect(BaseEffect):
