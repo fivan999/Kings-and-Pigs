@@ -1,5 +1,4 @@
 from settings import SCREEN_SIZE
-from hero import Hero
 
 
 class Camera:
@@ -23,4 +22,3 @@ class Camera:
         self.dy = -((target.rect.y + delta_height) + (target.rect.h - delta_height) // 2 - SCREEN_SIZE[1] // 2)
         target.terrain_collision_rect.x += self.dx
         target.terrain_collision_rect.y += self.dy
-

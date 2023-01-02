@@ -1,3 +1,5 @@
+import time
+
 import pygame
 from support import load_images
 
@@ -17,8 +19,8 @@ class Hero(pygame.sprite.Sprite):
         # основные механики
         self.direction = pygame.math.Vector2(0, 0)  # направление игрока по x и y
         self.speed = 4  # горизонтальная скорость
-        self.gravity = 0.7  # усиление гравитации
-        self.jump_speed = -10  # скорость прыжка
+        self.gravity = 0.55  # усиление гравитации
+        self.jump_speed = -9  # скорость прыжка
         self.health = 3  # здоровье
         self.damage_time = 0  # время до получения следующего урона
         self.fixed_height = 26  # высоты картинок разные, для камеры используем эту
@@ -28,6 +30,7 @@ class Hero(pygame.sprite.Sprite):
         self.facing_right = True  # смотрит вправо
         self.on_ground = False  # на земле
         self.finished_level = False  # закончил уровень
+        self.died = False  # закончилась анимация смерти
 
         # звуки
         self.jump_sound = pygame.mixer.Sound("../sounds/hero/jump.mp3")
@@ -38,7 +41,7 @@ class Hero(pygame.sprite.Sprite):
     def import_animation_images(self):
         self.animations = {"idle": list(), "jump": list(),
                            "run": list(), "fall": list(),
-                           "attack": list()}
+                           "attack": list(), "die": list()}
 
         for condition in self.animations:
             self.animations[condition] = load_images("../graphics/character/" + condition + '/')
@@ -64,10 +67,14 @@ class Hero(pygame.sprite.Sprite):
 
     # обновление текущего состояния игрока
     def get_status(self):
-        if self.status == 'attack':
+        if self.status in ("attack", "die"):
             return
 
-        if self.direction.y < 0:
+        if self.health == 0:
+            self.status = "die"
+            self.image_index = 0
+            self.animation_speed = 0.05
+        elif self.direction.y < 0:
             self.status = "jump"
         elif self.direction.y > 0.85:
             self.status = "fall"
@@ -80,6 +87,17 @@ class Hero(pygame.sprite.Sprite):
     def pass_damage_time(self):
         self.damage_time = max(self.damage_time - 0.02, 0)
 
+    # переворачиваем, если смотрит влево
+    def update_rect(self):
+        if self.facing_right:
+            self.rect.bottomright = self.terrain_collision_rect.bottomright
+        else:
+            self.image = pygame.transform.flip(self.image, flip_x=True, flip_y=False)
+            self.rect.bottomleft = self.terrain_collision_rect.bottomleft
+        self.rect = self.image.get_rect(midbottom=self.rect.midbottom)
+        if self.status == "die":
+            self.rect.top += 5
+
     # анимация
     def animate(self):
         self.get_status()
@@ -91,18 +109,14 @@ class Hero(pygame.sprite.Sprite):
                 self.status = None
                 self.animate()
                 return
-            self.image_index %= len(animation)
+            elif self.status == "die":
+                self.died = True
+                self.image_index -= 1
+            else:
+                self.image_index %= len(animation)
 
         self.image = animation[int(self.image_index)]
-
-        # переворачиваем, если смотрит влево
-        if self.facing_right:
-            self.rect.bottomright = self.terrain_collision_rect.bottomright
-        else:
-            self.image = pygame.transform.flip(self.image, flip_x=True, flip_y=False)
-            self.rect.bottomleft = self.terrain_collision_rect.bottomleft
-
-        self.rect = self.image.get_rect(midbottom=self.rect.midbottom)
+        self.update_rect()
 
     def update(self):
         self.pass_damage_time()

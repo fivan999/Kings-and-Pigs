@@ -1,5 +1,5 @@
 import pygame
-from random import randint
+from random import randint, choice
 from tile import AnimatedTile
 from settings import TILE_SIZE
 

@@ -1,8 +1,9 @@
 import pygame
+from random import randint, choice
 from settings import TILE_SIZE
 from tile import Tile, StaticTile, Diamond, Box
 from hero import Hero
-from support import import_csv, import_graphics
+from support import import_csv, cut_images, load_audio
 from enemy import Pig
 from camera import Camera
 from ui import UI
@@ -15,7 +16,7 @@ from menu import WinLoseMenu, PauseMenu
 # класс уровня
 # тут происходит обработка всех событий от игрока, если находится в уровне
 class Level:
-    def __init__(self, level, screen, is_last, set_main_menu):
+    def __init__(self, level, screen, is_last, set_main_menu, cur_diamonds):
         self.screen = screen
         self.camera = Camera()  # камера, которая следит за игроком
         self.ui = UI(self.screen)  # отображение здоровья и алмазов
@@ -30,7 +31,7 @@ class Level:
         self.level_menu = None  # текущее меню
 
         self.killed_pigs = 0  # количество убитых свиней
-        self.cur_diamonds = 0  # количество собранных алмазов
+        self.cur_diamonds = cur_diamonds  # количество собранных алмазов
         self.colliding_door = False  # игрок рядом с выходом или нет
         self.finished_level = False  # закончил ли игрок прохождение уровня
 
@@ -38,6 +39,7 @@ class Level:
     def setup_audio(self):
         self.diamond_sound = pygame.mixer.Sound("../sounds/diamond.wav")
         self.pig_die_sound = pygame.mixer.Sound("../sounds/pig/die.mp3")
+        self.pig_say_sounds = load_audio("../sounds/pig/say/")
         self.cannon_shot_sound = pygame.mixer.Sound("../sounds/cannon_shot.wav")
         self.bomb_boom_sound = pygame.mixer.Sound("../sounds/bomb_boom_sound.wav")
         self.bomb_boom_sound.set_volume(0.5)
@@ -84,11 +86,11 @@ class Level:
         tiles = list()
 
         if graphics_type == "terrain" or graphics_type == "background":
-            tiles = import_graphics("../graphics/terrain/terrain.png")
+            tiles = cut_images("../graphics/terrain/terrain.png")
         elif graphics_type == "decorations":
-            tiles = import_graphics("../graphics/decorations/decorations.png")
+            tiles = cut_images("../graphics/decorations/decorations.png")
         elif graphics_type == "default_platforms":
-            tiles = import_graphics("../graphics/decorations/default_platforms.png", y_size=15)
+            tiles = cut_images("../graphics/decorations/default_platforms.png", y_size=15)
 
         return tiles
 
@@ -150,29 +152,32 @@ class Level:
         collide_sprites = self.enemies_sprites.sprites() + self.cannon_sprites.sprites()
         for sprite in collide_sprites:
             if sprite.rect.colliderect(hero.rect):
+                sprite_type = type(sprite)
                 # если игрок атакует, то разрушаем врага или пушку
                 if hero.status == 'attack':
-                    if type(sprite) == Pig:
+                    if sprite_type == Pig:
                         self.killed_pigs += 1
+                        self.effects_sprites.add(EnemyDestroyEffect(sprite.rect.bottomleft))
                         self.pig_die_sound.play()
-                    else:
+                    elif sprite_type == Cannon:
                         # эффект взрыва пушки
                         self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
                         self.bomb_boom_sound.play()
                     sprite.kill()
                 elif hero.damage_time == 0:  # если игроку не наносили урон недавно
                     # проверяем, уничтожает ли игрок объект прыжком
-                    if sprite.rect.top < hero.rect.bottom < sprite.rect.bottom and hero.direction.y > 0:
+                    if sprite.rect.top < hero.rect.bottom <= sprite.rect.bottom and hero.direction.y > 0:
                         hero.jump()
-                        if type(sprite) == Pig:
+                        sprite.kill()
+                        if sprite_type == Pig:
                             self.killed_pigs += 1
+                            self.effects_sprites.add(EnemyDestroyEffect(sprite.rect.bottomleft))
                             self.pig_die_sound.play()
-                        else:
+                        elif sprite_type == Cannon:
                             # опять эффект взрыва
                             self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
                             self.bomb_boom_sound.play()
-                        sprite.kill()
-                    elif type(sprite) == Pig and sprite.rect.colliderect(hero.terrain_collision_rect):
+                    elif sprite_type == Pig and sprite.rect.colliderect(hero.terrain_collision_rect):
                         hero.get_damage()
 
     # столкновение игрока и шара от пушки
@@ -183,7 +188,7 @@ class Level:
 
         hero = self.hero
         for ball in self.cannon_balls_sprites.sprites():
-            collide_hero = hero.terrain_collision_rect.colliderect(ball)
+            collide_hero = hero.terrain_collision_rect.colliderect(ball) and hero.status != "die"
             collide_terrain = pygame.sprite.spritecollideany(ball, self.terrain_sprites)
             if collide_terrain or (collide_hero and not self.viewing_final_menu):
                 if collide_hero:  # если он сталкивается с игроком, игрок получает урон
@@ -225,13 +230,13 @@ class Level:
         # если игрок рядом с дверью и дверь открыта
         self.finished_level = self.colliding_door and self.colliding_door.finished_animation
         if self.is_last and self.finished_level:  # если игрок прошел игру (последний уровень завершен)
-            self.level_menu = WinLoseMenu(self.screen, "win", self.set_main_menu)
+            self.level_menu = WinLoseMenu(self.screen, "win", self.set_main_menu, self.cur_diamonds)
             self.viewing_final_menu = True
 
     # если игрок умер
     def check_lose(self):
-        if self.hero.health == 0:
-            self.level_menu = WinLoseMenu(self.screen, "lose", self.set_main_menu)
+        if self.hero.health == 0 and self.hero.died:
+            self.level_menu = WinLoseMenu(self.screen, "lose", self.set_main_menu, self.cur_diamonds)
             self.viewing_final_menu = True
             self.update_ui()
 
@@ -241,13 +246,19 @@ class Level:
         for sprite in self.get_all_sprites():
             self.camera.apply(sprite)
 
+    def make_pig_sound(self):
+        chance = 70
+        cnt_enemies = self.total_pigs - self.killed_pigs
+        if cnt_enemies and randint(1, chance // cnt_enemies) == 3:
+            choice(self.pig_say_sounds).play()
+
     # движение игрока по горизонтали
     def horizontal_move(self):
         hero = self.hero
+        tiles_groups = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
         hero.terrain_collision_rect.x += hero.direction.x * hero.speed
 
-        tiles_group = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
-        for tile in tiles_group:
+        for tile in tiles_groups:
             if tile.rect.colliderect(hero.terrain_collision_rect):
                 if hero.direction.x < 0:  # если игрок столкнулся с чем то, пока шел влево
                     hero.terrain_collision_rect.left = tile.rect.right
@@ -259,10 +270,10 @@ class Level:
     # движение игрока по вертикали
     def vertical_move(self):
         hero = self.hero
+        tiles_groups = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
         hero.use_gravity()
 
-        tiles_group = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
-        for tile in tiles_group:
+        for tile in tiles_groups:
             if tile.rect.colliderect(hero.terrain_collision_rect):
                 if hero.direction.y > 0:  # столкнулся пока падал
                     hero.terrain_collision_rect.bottom = tile.rect.top
@@ -295,9 +306,9 @@ class Level:
 
         if keys[pygame.K_SPACE] and self.hero.on_ground:  # прыжок
             self.hero.jump()
-        elif keys[pygame.K_e] and self.hero.on_ground and self.hero.status == "idle":  # атака
+        elif keys[pygame.K_f] and self.hero.on_ground and self.hero.status == "idle":  # атака
             self.hero.status = "attack"
-        if keys[pygame.K_q] and self.colliding_door:  # завершение уровня
+        if keys[pygame.K_UP] and self.colliding_door:  # завершение уровня
             if self.total_pigs == self.killed_pigs:
                 self.colliding_door.start_animation()
             else:
@@ -313,20 +324,20 @@ class Level:
 
     # обновляем игрока
     def update_hero(self):
-        if not self.viewing_final_menu:
-            self.hero.update()
-            self.hero.draw(self.screen)
+        self.check_lose()
+        self.check_win()
+        self.focus_camera()
+        self.hero.update()
+        self.hero.draw(self.screen)
+        self.cannon_ball_hero_collision()
+        if self.hero.status != 'attack':
+            self.vertical_move()
+        if not self.viewing_final_menu and not self.hero.status == "die":
+            self.horizontal_move()
             self.enemy_cannon_hero_collision()
             self.get_event()
-            if self.hero.status != 'attack':
-                self.horizontal_move()
-                self.vertical_move()
             self.diamond_collision()
             self.door_collision()
-            self.focus_camera()
-            self.check_lose()
-            self.check_win()
-        self.cannon_ball_hero_collision()
 
     # обновляем отображение здоровья и алмазов
     def update_ui(self):
@@ -362,11 +373,10 @@ class Level:
         self.enemy_block_collision()
         self.enemies_sprites.draw(self.screen)
         self.enemy_block.update()
+        self.make_pig_sound()
 
         self.box_sprites.update()
         self.box_sprites.draw(self.screen)
-
-        self.update_ui()
 
         self.effects_sprites.update()
         self.effects_sprites.draw(self.screen)
@@ -379,6 +389,7 @@ class Level:
         self.cannon_balls_sprites.draw(self.screen)
 
         self.update_hero()
+        self.update_ui()
 
     # рендеринг уроавня в зависимости от состояния
     def render(self):

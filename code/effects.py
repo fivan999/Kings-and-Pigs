@@ -10,7 +10,7 @@ class BaseEffect(pygame.sprite.Sprite):
         self.animation_speed = 0.3  # скорость анимации
         self.images = load_images(path)  # картинки для анимации
         self.image = self.images[self.image_index]
-        self.rect = self.image.get_rect(center=position) # позиция эффекта
+        self.rect = self.image.get_rect(center=position)  # позиция эффекта
 
     # анимация
     def animate(self):
@@ -25,10 +25,13 @@ class BaseEffect(pygame.sprite.Sprite):
 
 
 class EnemyDestroyEffect(BaseEffect):
-    path = '../graphics/explosion/'
+    path = '../graphics/enemies/die/'
 
     def __init__(self, position):
         super().__init__(position, EnemyDestroyEffect.path)
+        self.animation_speed = 0.05
+        self.rect = self.image.get_rect(bottomleft=position)
+        self.rect.y += 3
 
 
 class BombExplosionEffect(BaseEffect):

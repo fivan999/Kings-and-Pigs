@@ -10,6 +10,7 @@ class Game:
     def __init__(self, levels, screen):
         self.screen = screen
         self.levels = levels  # все уровни
+        self.setup_audio()
         self.set_menu()
 
     # подгрузка звуковых эффектов для игры
@@ -21,7 +22,8 @@ class Game:
 
     # установить состояние на главное меню
     def set_menu(self):
-        self.setup_audio()
+        self.cur_level = None
+        self.cur_diamonds = 0  # текущее количество алмазов (для результата)
         self.cur_level_index = 0  # текущий индекс уровня
         self.status = "menu"  # текущее состояние игры (уровень или меню)
         self.main_menu = MainMenu(self.screen)  # главное меню
@@ -29,8 +31,11 @@ class Game:
 
     # создание и переключение уровней
     def set_level(self):
+        if self.cur_level:
+            self.cur_diamonds = self.cur_level.cur_diamonds
         level_is_last = self.cur_level_index == len(self.levels) - 1  # является ли уровень последним
-        self.cur_level = Level(self.levels[self.cur_level_index], self.screen, level_is_last, self.set_menu)
+        self.cur_level = Level(self.levels[self.cur_level_index], self.screen, level_is_last,
+                               self.set_menu, self.cur_diamonds)
         self.cur_level_index += 1
         self.status = "level"
 

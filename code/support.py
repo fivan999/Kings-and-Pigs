@@ -4,10 +4,19 @@ import csv
 from settings import TILE_SIZE
 
 
+# подгрузить все файлы из нужной директории
+def load_files(path):
+    return sorted([name for _, __, names in os.walk(path) for name in names])
+
+
 # подгрузить картинки из нужной директории
 def load_images(path):
-    images = sorted([name for _, __, names in os.walk(path) for name in names])
-    return [pygame.image.load(path + name).convert_alpha() for name in images]
+    return [pygame.image.load(path + name).convert_alpha() for name in load_files(path)]
+
+
+# подгрузить звуки из нужной директории
+def load_audio(path):
+    return [pygame.mixer.Sound(path + name) for name in load_files(path)]
 
 
 # подгрузить конфигурацию уровня из csv-файла
@@ -18,7 +27,7 @@ def import_csv(path):
 
 
 # нарезать мелкие картинки из большой
-def import_graphics(path, x_size=TILE_SIZE, y_size=TILE_SIZE):
+def cut_images(path, x_size=TILE_SIZE, y_size=TILE_SIZE):
     tiles = list()
     surface = pygame.image.load(path).convert_alpha()
     cnt_x_tiles = surface.get_width() // x_size
