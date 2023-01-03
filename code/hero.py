@@ -14,16 +14,16 @@ class Hero(pygame.sprite.Sprite):
         self.image = self.animations["idle"][self.image_index]
         self.rect = self.image.get_rect(topleft=position)  # устанавляваем позицию
         # для столкновений с клетками нам нужен другой квадрат, потому что часть предыдущего это кувалда
-        self.terrain_collision_rect = pygame.Rect((self.rect.left + 12, self.rect.top), (25, self.rect.height))
+        self.terrain_collision_rect = pygame.Rect((self.rect.left + 24, self.rect.top), (50, self.rect.height))
 
         # основные механики
         self.direction = pygame.math.Vector2(0, 0)  # направление игрока по x и y
-        self.speed = 4  # горизонтальная скорость
+        self.speed = 6  # горизонтальная скорость
         self.gravity = 0.55  # усиление гравитации
-        self.jump_speed = -9  # скорость прыжка
+        self.jump_speed = -12  # скорость прыжка
         self.health = 3  # здоровье
         self.damage_time = 0  # время до получения следующего урона
-        self.fixed_height = 26  # высоты картинок разные, для камеры используем эту
+        self.fixed_height = 52  # высоты картинок разные, для камеры используем эту
 
         # флаги
         self.status = "idle"  # текущее состояние (на месте, бег, прыжок, падение, атака)
@@ -96,7 +96,7 @@ class Hero(pygame.sprite.Sprite):
             self.rect.bottomleft = self.terrain_collision_rect.bottomleft
         self.rect = self.image.get_rect(midbottom=self.rect.midbottom)
         if self.status == "die":
-            self.rect.top += 5
+            self.rect.top += 10
 
     # анимация
     def animate(self):

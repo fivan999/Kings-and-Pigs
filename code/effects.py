@@ -31,7 +31,7 @@ class EnemyDestroyEffect(BaseEffect):
         super().__init__(position, EnemyDestroyEffect.path)
         self.animation_speed = 0.05
         self.rect = self.image.get_rect(bottomleft=position)
-        self.rect.y += 3
+        self.rect.y += 8
 
 
 class BombExplosionEffect(BaseEffect):

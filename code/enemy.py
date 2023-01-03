@@ -9,10 +9,10 @@ class Pig(AnimatedTile):
         super().__init__(position, "../graphics/enemies/run/")
         # зададим позицию врага
         self.rect = self.image.get_rect(topleft=position)
-        self.rect.y += TILE_SIZE - self.image.get_height() - 1
+        self.rect.y += TILE_SIZE - self.image.get_height() - 2
 
         self.direction = -1  # направление движения врага
-        self.speed = randint(1, 2)
+        self.speed = randint(2, 4)
         self.back_move = False  # если враг направлен вправо
 
     # разворот

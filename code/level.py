@@ -90,7 +90,7 @@ class Level:
         elif graphics_type == "decorations":
             tiles = cut_images("../graphics/decorations/decorations.png")
         elif graphics_type == "default_platforms":
-            tiles = cut_images("../graphics/decorations/default_platforms.png", y_size=15)
+            tiles = cut_images("../graphics/decorations/default_platforms.png", y_size=30)
 
         return tiles
 
@@ -166,7 +166,7 @@ class Level:
                     sprite.kill()
                 elif hero.damage_time == 0:  # если игроку не наносили урон недавно
                     # проверяем, уничтожает ли игрок объект прыжком
-                    if sprite.rect.top < hero.rect.bottom <= sprite.rect.bottom and hero.direction.y > 0:
+                    if sprite.rect.top < hero.rect.bottom <= sprite.rect.bottom and hero.direction.y > 2:
                         hero.jump()
                         sprite.kill()
                         if sprite_type == Pig:
@@ -246,6 +246,7 @@ class Level:
         for sprite in self.get_all_sprites():
             self.camera.apply(sprite)
 
+    # хрюканье свиньи
     def make_pig_sound(self):
         chance = 70
         cnt_enemies = self.total_pigs - self.killed_pigs

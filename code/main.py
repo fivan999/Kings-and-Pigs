@@ -13,7 +13,7 @@ def main():
     screen = pygame.display.set_mode(SCREEN_SIZE)
 
     # надпись загрузки
-    font = pygame.font.Font("../fonts/ARCADEPI.TTF", 20)
+    font = pygame.font.Font("../fonts/ARCADEPI.TTF", 40)
     loading_text = font.render("loading...", True, "#ffffff")
     screen.blit(loading_text, (SCREEN_SIZE[0] // 2 - loading_text.get_width() // 2,
                                SCREEN_SIZE[1] // 2 - loading_text.get_height() // 2))
