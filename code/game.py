@@ -4,7 +4,7 @@ from menu import MainMenu
 
 
 # основной игровой класс
-# предназначен для связи между уровнями и менюшками
+# предназначен для связи между уровнями и меню
 # ловит события и направляет их куда надо
 class Game:
     def __init__(self, levels, screen):
@@ -13,7 +13,7 @@ class Game:
         self.setup_audio()
         self.set_menu()
 
-    # подгрузка звуковых эффектов для игры
+    # загрузка звуковых эффектов для игры
     def setup_audio(self):
         self.main_menu_music = pygame.mixer.Sound("../sounds/main_menu.mp3")
         self.main_menu_music.set_volume(0.6)
@@ -33,19 +33,20 @@ class Game:
     def set_level(self):
         if self.cur_level:
             self.cur_diamonds = self.cur_level.cur_diamonds
-        level_is_last = self.cur_level_index == len(self.levels) - 1  # является ли уровень последним
-        self.cur_level = Level(self.levels[self.cur_level_index], self.screen, level_is_last,
+        self.cur_level = Level(self.levels[self.cur_level_index], self.screen,
                                self.set_menu, self.cur_diamonds)
         self.cur_level_index += 1
         self.status = "level"
 
-    # отлавливаем эвенты от игрока
+    # отлавливаем события от игрока
     def get_event(self, event):
         if event.type == pygame.KEYDOWN:
             if self.status == "menu":
-                self.main_menu.get_event(event)  # эвент идет в главное меню
+                self.main_menu.get_event(event)  # событие идет в главное меню
             if self.status == "level" and (self.cur_level.viewing_final_menu or self.cur_level.paused):
-                self.cur_level.level_menu.get_event(event)  # эвент идет в меню уровня
+                self.cur_level.level_menu.get_event(event)  # событие идет в меню уровня
+            elif self.status == "level":
+                self.cur_level.get_key_press_event(event)
 
     # рендеринг игры в зависимости от текущего ее состояния
     def render(self):

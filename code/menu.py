@@ -43,8 +43,8 @@ class BaseMenu:
         self.callbacks = list()  # функции для ответа на эвенты
         self.options = list()  # варианты выбора
         self.option_index = 0  # индекс текущей кнопки
-        self.big_font = pygame.font.Font("../fonts/ARCADEPI.TTF", 20)
-        self.small_font = pygame.font.Font("../fonts/ARCADEPI.TTF", 14)
+        self.big_font = pygame.font.Font("../fonts/ARCADEPI.TTF", 40)
+        self.small_font = pygame.font.Font("../fonts/ARCADEPI.TTF", 28)
 
     # ловим евенты от менюшки
     def get_event(self, event):
@@ -89,11 +89,11 @@ class MainMenu(BaseMenu):
     # создание кнопок и надписей
     def setup_menu(self):
         logo_image = pygame.image.load("../graphics/menu/logos/big_logo.png")
-        self.logo = MenuBackground((SCREEN_SIZE[0] // 2 - logo_image.get_width() // 2, self.background.rect.top + 85),
+        self.logo = MenuBackground((SCREEN_SIZE[0] // 2 - logo_image.get_width() // 2, self.background.rect.top + 170),
                                    logo_image)  # логотип игры
 
-        self.create_option("PLAY", SCREEN_SIZE[1] // 2 - 20, self.start_game)  # надпись "играть"
-        self.create_option("EXIT", SCREEN_SIZE[1] // 2 + 20, self.exit_game)  # надпись "выйти"
+        self.create_option("PLAY", SCREEN_SIZE[1] // 2 - 40, self.start_game)  # надпись "играть"
+        self.create_option("EXIT", SCREEN_SIZE[1] // 2 + 40, self.exit_game)  # надпись "выйти"
 
     # начать игру
     def start_game(self):
@@ -129,17 +129,17 @@ class WinLoseMenu(BaseMenu):
         else:
             text = "YOU LOSE!"
         self.status_text_surface = self.big_font.render(text, True, "#ffffff")  # текст (победа или проигрыш)
-        self.create_option("MENU", SCREEN_SIZE[1] // 2 - 5,
+        self.create_option("MENU", SCREEN_SIZE[1] // 2 - 10,
                            self.set_main_menu)  # надпись "в меню"
         self.total_diamonds_text_surface = self.small_font.render(f"total diamonds: {self.total_diamonds}",
                                                                   True, "#ffffff")
 
     def render(self):
         self.background.surface.blit(self.status_text_surface, (self.background.surface.get_width() // 2 -
-                                                                self.status_text_surface.get_width() // 2, 40))
+                                                                self.status_text_surface.get_width() // 2, 80))
         self.background.surface.blit(self.total_diamonds_text_surface,
                                      (self.background.surface.get_width() // 2 -
-                                      self.total_diamonds_text_surface.get_width() // 2, 70))
+                                      self.total_diamonds_text_surface.get_width() // 2, 140))
         super().render()
 
 
@@ -156,12 +156,12 @@ class PauseMenu(BaseMenu):
     # создание кнопок и надписей
     def setup_menu(self):
         self.pause_text_surface = self.big_font.render("PAUSE", True, "#ffffff")  # надпись "пауза"
-        self.create_option("CONTINUE", SCREEN_SIZE[1] // 2 - 20,
+        self.create_option("CONTINUE", SCREEN_SIZE[1] // 2 - 40,
                            self.set_pause)  # надпись "продолжить"
-        self.create_option("MENU", SCREEN_SIZE[1] // 2 + 20,
+        self.create_option("MENU", SCREEN_SIZE[1] // 2 + 40,
                            self.set_main_menu)  # надпись "в меню"
 
     def render(self):
         self.background.surface.blit(self.pause_text_surface, (self.background.surface.get_width() // 2 -
-                                                               self.pause_text_surface.get_width() // 2, 40))
+                                                               self.pause_text_surface.get_width() // 2, 80))
         super().render()

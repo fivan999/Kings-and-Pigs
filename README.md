@@ -1,5 +1,7 @@
 # Kings and pigs
 ![](./graphics/menu/logos/big_logo.png)
+
+### Проект Pygame студента 2го года Лицея Академии Яндекса (2022 - 2023)
 ## Игровой процесс
 Игра сделана в стиле Roguelike. Это значит, что после смерти персонажа игра начинается заново. Никаких сохранений нет.
 
@@ -25,6 +27,8 @@ pip install -r requirements.txt
 python code/main.py
 ~~~
 ## Использованные ресурсы
+- Уроки Лицея Академии Яндекса: https://academy.yandex.ru/lyceum/
+- Документация Pygame: https://devdocs.io/pygame/
 - Спрайты: https://pixelfrog-assets.itch.io/kings-and-pigs
 - Звуки 
   - Дверь: https://opengameart.org/content/door-open-door-close-set

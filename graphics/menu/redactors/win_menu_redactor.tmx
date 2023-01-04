@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="9" height="7" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="1">
- <tileset firstgid="1" source="../tilesets/terrain.tsx"/>
- <tileset firstgid="177" source="../tilesets/setup_enemy.tsx"/>
- <tileset firstgid="179" source="../tilesets/cannon.tsx"/>
- <tileset firstgid="180" source="../tilesets/decorations.tsx"/>
- <tileset firstgid="200" source="../tilesets/default_platforms.tsx"/>
- <tileset firstgid="204" source="../tilesets/dead_king.tsx"/>
- <tileset firstgid="205" source="../tilesets/pig_die.tsx"/>
- <tileset firstgid="206" source="../tilesets/hero_idle.tsx"/>
+<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="9" height="7" tilewidth="64" tileheight="64" infinite="0" nextlayerid="7" nextobjectid="1">
+ <tileset firstgid="1" source="../../tilesets/terrain.tsx"/>
+ <tileset firstgid="177" source="../../tilesets/setup_enemy.tsx"/>
+ <tileset firstgid="179" source="../../tilesets/cannon.tsx"/>
+ <tileset firstgid="180" source="../../tilesets/decorations.tsx"/>
+ <tileset firstgid="200" source="../../tilesets/default_platforms.tsx"/>
+ <tileset firstgid="204" source="../../tilesets/dead_king.tsx"/>
+ <tileset firstgid="205" source="../../tilesets/pig_die.tsx"/>
+ <tileset firstgid="206" source="../../tilesets/hero_idle.tsx"/>
  <layer id="1" name="Слой тайлов 1" width="9" height="7">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,
