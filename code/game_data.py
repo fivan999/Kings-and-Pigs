@@ -9,7 +9,9 @@ level_1 = {
     "background": "../levels/lvl1/lvl1_Background.csv",
     "final_door": "../levels/lvl1/lvl1_Door.csv",
     "start_door": "../levels/lvl1/lvl1_Background_door.csv",
-    "cannon": "../levels/lvl1/lvl1_Cannon.csv"
+    "cannon": "../levels/lvl1/lvl1_Cannon.csv",
+    "is_last": False,
+    "size": (1216, 512)
 }
 
 
@@ -24,7 +26,9 @@ level_2 = {
     "background": "../levels/lvl2/lvl2_Background.csv",
     "final_door": "../levels/lvl2/lvl2_Door.csv",
     "start_door": "../levels/lvl2/lvl2_Background_door.csv",
-    "cannon": "../levels/lvl2/lvl2_Cannon.csv"
+    "cannon": "../levels/lvl2/lvl2_Cannon.csv",
+    "is_last": False,
+    "size": (1280, 832)
 }
 
 
@@ -39,7 +43,9 @@ level_3 = {
     "background": "../levels/lvl3/lvl3_Background.csv",
     "final_door": "../levels/lvl3/lvl3_Door.csv",
     "start_door": "../levels/lvl3/lvl3_Background_door.csv",
-    "cannon": "../levels/lvl3/lvl3_Cannon.csv"
+    "cannon": "../levels/lvl3/lvl3_Cannon.csv",
+    "is_last": True,
+    "size": (896, 960)
 }
 
 

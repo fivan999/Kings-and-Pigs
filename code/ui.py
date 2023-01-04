@@ -43,7 +43,7 @@ class UI:
 
     # рендеринг текста
     def render_text(self):
-        if self.text_time_remains > 0:  # если врямя отображения текста не закончилось
+        if self.text_time_remains > 0:  # если время отображения текста не закончилось
             x_pos = SCREEN_SIZE[0] // 2 - self.current_text.get_width() // 2
             self.screen.blit(self.current_text, (x_pos, 20))
         self.text_time_remains = max(0, self.text_time_remains - 0.01)

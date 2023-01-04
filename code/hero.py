@@ -1,5 +1,3 @@
-import time
-
 import pygame
 from support import load_images
 
@@ -8,13 +6,16 @@ from support import load_images
 class Hero(pygame.sprite.Sprite):
     def __init__(self, position):
         super().__init__()
-        self.import_animation_images()  # подгрузка всех картинок для анимации
+        self.import_animation_images()  # загрузка всех картинок для анимации
         self.image_index = 0  # текущая картинка
         self.animation_speed = 0.15  # скорость анимации
         self.image = self.animations["idle"][self.image_index]
-        self.rect = self.image.get_rect(topleft=position)  # устанавляваем позицию
+        self.rect = self.image.get_rect(topleft=position)  # устанавливаем позицию
         # для столкновений с клетками нам нужен другой квадрат, потому что часть предыдущего это кувалда
         self.terrain_collision_rect = pygame.Rect((self.rect.left + 24, self.rect.top), (50, self.rect.height))
+        # для атаки нужен другой квадрат, так как атакуем мы только кувалдой
+        self.attack_rect = None
+        self.attack_shift = 51  # картинка атаки шире обычной, поэтому для реалистичности мы ее сдвигаем
 
         # основные механики
         self.direction = pygame.math.Vector2(0, 0)  # направление игрока по x и y
@@ -37,7 +38,7 @@ class Hero(pygame.sprite.Sprite):
         self.get_damage_sound = pygame.mixer.Sound("../sounds/hero/get_damage.mp3")
         self.attack_sound = pygame.mixer.Sound("../sounds/hero/attack.mp3")
 
-    # подгрузка всех картинок для анимации
+    # загрузка всех картинок для анимации
     def import_animation_images(self):
         self.animations = {"idle": list(), "jump": list(),
                            "run": list(), "fall": list(),
@@ -45,6 +46,18 @@ class Hero(pygame.sprite.Sprite):
 
         for condition in self.animations:
             self.animations[condition] = load_images("../graphics/character/" + condition + '/')
+
+    # атака
+    def attack(self):
+        if self.on_ground and self.status == "idle":
+            self.status = "attack"
+            self.image_index = 0
+            self.terrain_collision_rect.x += self.attack_shift
+            if self.facing_right:
+                self.attack_rect = pygame.Rect((self.rect.left + 74, self.rect.top), (36, self.rect.height))
+            else:
+                self.attack_rect = pygame.Rect(self.rect.topleft, (36, self.rect.height))
+            self.attack_sound.play()
 
     # прыжок
     def jump(self):
@@ -103,12 +116,17 @@ class Hero(pygame.sprite.Sprite):
         self.get_status()
         animation = self.animations[self.status]
 
-        self.image_index = self.image_index + self.animation_speed
-        if self.image_index > len(animation):
+        if self.status == "attack":
+            self.image_index = self.image_index + 0.1
+        else:
+            self.image_index = self.image_index + self.animation_speed
+        if self.image_index >= len(animation):
             if self.status == 'attack':
                 self.status = None
-                self.animate()
-                return
+                self.get_status()
+                self.image_index = 0
+                self.terrain_collision_rect.x -= self.attack_shift
+                self.attack_rect = None
             elif self.status == "die":
                 self.died = True
                 self.image_index -= 1

@@ -11,7 +11,7 @@ class Cannon(StaticTile):
     def __init__(self, position):
         super().__init__(position, pygame.image.load(Cannon.path).convert_alpha())
         self.idle_image = pygame.Surface((self.image.get_width(), self.image.get_height()),
-                                         pygame.SRCALPHA)  # картинка для нестреляющей пушки
+                                         pygame.SRCALPHA)  # картинка для не стреляющей пушки
         self.idle_image.blit(self.image, (0, 0))
         self.time_before_shoot = randint(6, 14)  # время до анимации выстрела
         self.image_index = -1  # индекс картинки для анимации
