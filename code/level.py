@@ -1,3 +1,5 @@
+import time
+
 import pygame
 from random import randint, choice
 from settings import TILE_SIZE
@@ -31,7 +33,7 @@ class Level:
         self.paused = False  # на паузе или нет
         self.level_menu = None  # текущее меню
 
-        self.killed_pigs = 0  # количество убитых свиней
+        self.cnt_killed_pigs = 0  # количество убитых свиней
         self.cur_diamonds = cur_diamonds  # количество собранных алмазов
         self.colliding_door = False  # игрок рядом с выходом или нет
         self.finished_level = False  # закончил ли игрок прохождение уровня
@@ -132,7 +134,7 @@ class Level:
 
     # уничтожаем свинью со спрайтом pig
     def kill_pig(self, pig):
-        self.killed_pigs += 1
+        self.cnt_killed_pigs += 1
         self.effects_sprites.add(EnemyDestroyEffect(pig.rect.bottomleft))
         self.pig_die_sound.play()
         pig.kill()
@@ -146,7 +148,7 @@ class Level:
     # прыгает ли игрок на спрайт
     def check_jump_destruction(self, sprite):
         return sprite.rect.top < self.hero.terrain_collision_rect.bottom <= sprite.rect.bottom \
-               and self.hero.direction.y > 2
+               and self.hero.direction.y > 4
 
     # столкновение врагов с блоками-ограничителями движения
     def enemy_block_collision(self):
@@ -246,7 +248,7 @@ class Level:
     # хрюканье свиньи
     def make_pig_sound(self):
         chance = 70
-        cnt_enemies = self.total_pigs - self.killed_pigs
+        cnt_enemies = self.total_pigs - self.cnt_killed_pigs
         if cnt_enemies and randint(1, chance // cnt_enemies) == 3:
             choice(self.pig_say_sounds).play()
 
@@ -289,7 +291,7 @@ class Level:
         key = event.key
 
         if key == pygame.K_UP and self.colliding_door:  # завершение уровня
-            if self.total_pigs == self.killed_pigs:
+            if self.total_pigs == self.cnt_killed_pigs:
                 self.colliding_door.start_animation()
             else:
                 self.ui.set_current_text("kill all pigs to finish level")
@@ -301,7 +303,8 @@ class Level:
     # отлавливаем события с зажатой клавишей
     def get_key_hold_event(self):
         if self.finished_level or self.viewing_final_menu or self.paused or \
-                (self.colliding_door and self.colliding_door.animation_started):
+                (self.colliding_door and self.colliding_door.animation_started) \
+                or self.hero.status == "attack":
             return
 
         keys = pygame.key.get_pressed()
@@ -310,11 +313,9 @@ class Level:
         if keys[pygame.K_RIGHT]:
             self.hero.direction.x = 1
             self.hero.facing_right = True
-            self.hero.attack_shift = abs(self.hero.attack_shift)
         elif keys[pygame.K_LEFT]:
             self.hero.direction.x = -1
             self.hero.facing_right = False
-            self.hero.attack_shift = -abs(self.hero.attack_shift)
         else:
             self.hero.direction.x = 0
 
