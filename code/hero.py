@@ -1,5 +1,6 @@
 import pygame
 from support import load_images
+from sounds import JUMP_SOUND, HERO_DAMAGE_SOUND, ATTACK_SOUND
 
 
 # игрок
@@ -15,7 +16,6 @@ class Hero(pygame.sprite.Sprite):
         self.terrain_collision_rect = pygame.Rect((self.rect.left + 24, self.rect.top), (50, self.rect.height))
         # для атаки нужен другой квадрат, так как атакуем мы только кувалдой
         self.attack_rect = None
-        self.attack_shift = 51  # картинка атаки шире обычной, поэтому для реалистичности мы ее сдвигаем
 
         # основные механики
         self.direction = pygame.math.Vector2(0, 0)  # направление игрока по x и y
@@ -33,11 +33,6 @@ class Hero(pygame.sprite.Sprite):
         self.finished_level = False  # закончил уровень
         self.died = False  # закончилась анимация смерти
 
-        # звуки
-        self.jump_sound = pygame.mixer.Sound("../sounds/hero/jump.mp3")
-        self.get_damage_sound = pygame.mixer.Sound("../sounds/hero/get_damage.mp3")
-        self.attack_sound = pygame.mixer.Sound("../sounds/hero/attack.mp3")
-
     # загрузка всех картинок для анимации
     def import_animation_images(self):
         self.animations = {"idle": list(), "jump": list(),
@@ -52,17 +47,18 @@ class Hero(pygame.sprite.Sprite):
         if self.on_ground and self.status == "idle":
             self.status = "attack"
             self.image_index = 0
-            self.terrain_collision_rect.x += self.attack_shift
             if self.facing_right:
-                self.attack_rect = pygame.Rect((self.rect.left + 74, self.rect.top), (36, self.rect.height))
+                self.attack_rect = pygame.Rect((self.terrain_collision_rect.left + 49, self.terrain_collision_rect.top),
+                                               (50, self.terrain_collision_rect.height))
             else:
-                self.attack_rect = pygame.Rect(self.rect.topleft, (36, self.rect.height))
-            self.attack_sound.play()
+                self.attack_rect = pygame.Rect((self.terrain_collision_rect.left - 49, self.terrain_collision_rect.top),
+                                               (50, self.terrain_collision_rect.height))
+            ATTACK_SOUND.play()
 
     # прыжок
     def jump(self):
         self.direction.y = self.jump_speed
-        self.jump_sound.play()
+        JUMP_SOUND.play()
 
     # падение за счет гравитации
     def use_gravity(self):
@@ -76,7 +72,7 @@ class Hero(pygame.sprite.Sprite):
             self.health = max(self.health - 1, 0)
             self.jump()
             self.direction.x = -1
-            self.get_damage_sound.play()
+            HERO_DAMAGE_SOUND.play()
 
     # обновление текущего состояния игрока
     def get_status(self):
@@ -100,13 +96,20 @@ class Hero(pygame.sprite.Sprite):
     def pass_damage_time(self):
         self.damage_time = max(self.damage_time - 0.02, 0)
 
-    # переворачиваем, если смотрит влево
+    # обновляем положение игрока
     def update_rect(self):
+        # у картинки атаки ширина больше, поэтому нужно располагать игрока по другому, если он атакует
         if self.facing_right:
-            self.rect.bottomright = self.terrain_collision_rect.bottomright
+            if self.status == "attack":
+                self.rect.bottomleft = self.terrain_collision_rect.bottomleft
+            else:
+                self.rect.bottomright = self.terrain_collision_rect.bottomright
         else:
             self.image = pygame.transform.flip(self.image, flip_x=True, flip_y=False)
-            self.rect.bottomleft = self.terrain_collision_rect.bottomleft
+            if self.status == "attack":
+                self.rect.bottomright = self.terrain_collision_rect.bottomright
+            else:
+                self.rect.bottomleft = self.terrain_collision_rect.bottomleft
         self.rect = self.image.get_rect(midbottom=self.rect.midbottom)
         if self.status == "die":
             self.rect.top += 10
@@ -125,7 +128,6 @@ class Hero(pygame.sprite.Sprite):
                 self.status = None
                 self.get_status()
                 self.image_index = 0
-                self.terrain_collision_rect.x -= self.attack_shift
                 self.attack_rect = None
             elif self.status == "die":
                 self.died = True
