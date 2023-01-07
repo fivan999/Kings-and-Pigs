@@ -1,11 +1,9 @@
-import time
-
 import pygame
 from random import randint, choice
 from settings import TILE_SIZE
 from tile import Tile, StaticTile, Diamond, Box
 from hero import Hero
-from support import import_csv, cut_images, load_audio
+from support import import_csv, cut_images
 from enemy import Pig
 from camera import Camera
 from ui import UI
@@ -13,6 +11,8 @@ from door import Door
 from cannon import Cannon, CannonBall
 from effects import EnemyDestroyEffect, BombExplosionEffect
 from menu import WinLoseMenu, PauseMenu
+from sounds import (DIAMOND_SOUND, PIG_DIE_SOUND, PIG_SAY_SOUND,
+                    CANNON_SHOT_SOUND, BOMB_BOOM_SOUND, LOSE_SOUND)
 
 
 # класс уровня
@@ -23,7 +23,6 @@ class Level:
         self.ui = UI(self.screen)  # отображение здоровья и алмазов
         self.total_pigs = 0  # количество свиней в уровне
         self.setup_level(level)
-        self.setup_audio()
         self.camera = Camera(self.hero, level["size"])  # камера, которая следит за игроком
 
         # функция для установки главного меню, передается от класса Game при инициализации уровня
@@ -37,15 +36,6 @@ class Level:
         self.cur_diamonds = cur_diamonds  # количество собранных алмазов
         self.colliding_door = False  # игрок рядом с выходом или нет
         self.finished_level = False  # закончил ли игрок прохождение уровня
-
-    # загрузка звуковых эффектов для уровня
-    def setup_audio(self):
-        self.diamond_sound = pygame.mixer.Sound("../sounds/diamond.wav")
-        self.pig_die_sound = pygame.mixer.Sound("../sounds/pig/die.mp3")
-        self.pig_say_sounds = load_audio("../sounds/pig/say/")
-        self.cannon_shot_sound = pygame.mixer.Sound("../sounds/cannon_shot.wav")
-        self.bomb_boom_sound = pygame.mixer.Sound("../sounds/bomb_boom_sound.wav")
-        self.bomb_boom_sound.set_volume(0.5)
 
     # загрузка всех спрайтов
     def setup_level(self, level):
@@ -136,13 +126,13 @@ class Level:
     def kill_pig(self, pig):
         self.cnt_killed_pigs += 1
         self.effects_sprites.add(EnemyDestroyEffect(pig.rect.bottomleft))
-        self.pig_die_sound.play()
+        PIG_DIE_SOUND.play()
         pig.kill()
 
     # уничтожаем пушку или пушечный шар
     def kill_cannon_or_ball(self, sprite):
         self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
-        self.bomb_boom_sound.play()
+        BOMB_BOOM_SOUND.play()
         sprite.kill()
 
     # прыгает ли игрок на спрайт
@@ -213,7 +203,7 @@ class Level:
             if diamond.rect.colliderect(hero.rect):
                 diamond.kill()
                 self.cur_diamonds += 1
-                self.diamond_sound.play()
+                DIAMOND_SOUND.play()
 
     # проверка, стреляет ли пушка
     def check_cannon_shoot(self):
@@ -223,22 +213,24 @@ class Level:
                 position = cannon.rect.topleft
                 cannon.shot = True
                 self.cannon_balls_sprites.add(CannonBall(position))
-                self.cannon_shot_sound.play()
+                CANNON_SHOT_SOUND.play()
 
     # проверка, прошел ли игрок уровень
     def check_win(self):
         # если игрок рядом с дверью и дверь открыта
         self.finished_level = self.colliding_door and self.colliding_door.finished_animation
-        if self.is_last and self.finished_level:  # если игрок прошел игру (последний уровень завершен)
+        # если игрок прошел игру (последний уровень завершен)
+        if self.is_last and self.finished_level and not self.viewing_final_menu:
             self.level_menu = WinLoseMenu(self.screen, "win", self.set_main_menu, self.cur_diamonds)
             self.viewing_final_menu = True
 
     # если игрок умер
     def check_lose(self):
-        if self.hero.health == 0 and self.hero.died:
+        if self.hero.health == 0 and self.hero.died and not self.viewing_final_menu:
             self.level_menu = WinLoseMenu(self.screen, "lose", self.set_main_menu, self.cur_diamonds)
             self.viewing_final_menu = True
             self.update_ui()
+            LOSE_SOUND.play()
 
     # фокусировка камеры
     def draw_by_camera(self, group):
@@ -250,7 +242,7 @@ class Level:
         chance = 70
         cnt_enemies = self.total_pigs - self.cnt_killed_pigs
         if cnt_enemies and randint(1, chance // cnt_enemies) == 3:
-            choice(self.pig_say_sounds).play()
+            choice(PIG_SAY_SOUND).play()
 
     # движение игрока по горизонтали
     def horizontal_move(self):

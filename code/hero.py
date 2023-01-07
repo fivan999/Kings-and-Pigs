@@ -1,5 +1,6 @@
 import pygame
 from support import load_images
+from sounds import JUMP_SOUND, HERO_DAMAGE_SOUND, ATTACK_SOUND
 
 
 # игрок
@@ -32,11 +33,6 @@ class Hero(pygame.sprite.Sprite):
         self.finished_level = False  # закончил уровень
         self.died = False  # закончилась анимация смерти
 
-        # звуки
-        self.jump_sound = pygame.mixer.Sound("../sounds/hero/jump.mp3")
-        self.get_damage_sound = pygame.mixer.Sound("../sounds/hero/get_damage.mp3")
-        self.attack_sound = pygame.mixer.Sound("../sounds/hero/attack.mp3")
-
     # загрузка всех картинок для анимации
     def import_animation_images(self):
         self.animations = {"idle": list(), "jump": list(),
@@ -57,12 +53,12 @@ class Hero(pygame.sprite.Sprite):
             else:
                 self.attack_rect = pygame.Rect((self.terrain_collision_rect.left - 49, self.terrain_collision_rect.top),
                                                (50, self.terrain_collision_rect.height))
-            self.attack_sound.play()
+            ATTACK_SOUND.play()
 
     # прыжок
     def jump(self):
         self.direction.y = self.jump_speed
-        self.jump_sound.play()
+        JUMP_SOUND.play()
 
     # падение за счет гравитации
     def use_gravity(self):
@@ -76,7 +72,7 @@ class Hero(pygame.sprite.Sprite):
             self.health = max(self.health - 1, 0)
             self.jump()
             self.direction.x = -1
-            self.get_damage_sound.play()
+            HERO_DAMAGE_SOUND.play()
 
     # обновление текущего состояния игрока
     def get_status(self):
