@@ -35,7 +35,7 @@ class Level:
         self.cnt_killed_pigs = 0  # количество убитых свиней
         self.cur_diamonds = cur_diamonds  # количество собранных алмазов
         self.colliding_door = False  # игрок рядом с выходом или нет
-        self.finished_level = False  # закончил ли игрок прохождение уровня
+        self.finished_level = False  # финальная дверь закончила открываться
 
     # загрузка всех спрайтов
     def setup_level(self, level):
@@ -248,7 +248,10 @@ class Level:
     def horizontal_move(self):
         hero = self.hero
         tiles_groups = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
-        hero.terrain_collision_rect.x += hero.direction.x * hero.speed
+        delta_x = hero.direction.x * hero.speed
+        if hero.status == "attack":
+            delta_x *= 0.5
+        hero.terrain_collision_rect.x += delta_x
 
         for tile in tiles_groups:
             if tile.rect.colliderect(hero.terrain_collision_rect):
@@ -278,10 +281,18 @@ class Level:
         if hero.on_ground and hero.direction.y < 0 or hero.direction.y > 1:
             hero.on_ground = False
 
+    # состояния, когда игрок уже не может контролировать героя
+    def check_level_finished(self):
+        return self.finished_level or self.viewing_final_menu or self.paused or \
+               (self.colliding_door and self.colliding_door.animation_started) or \
+               self.hero.status == "die"
+
     # отлавливаем нажатия клавиш
     def get_key_press_event(self, event):
-        key = event.key
+        if self.check_level_finished():
+            return
 
+        key = event.key
         if key == pygame.K_UP and self.colliding_door:  # завершение уровня
             if self.total_pigs == self.cnt_killed_pigs:
                 self.colliding_door.start_animation()
@@ -294,9 +305,7 @@ class Level:
 
     # отлавливаем события с зажатой клавишей
     def get_key_hold_event(self):
-        if self.finished_level or self.viewing_final_menu or self.paused or \
-                (self.colliding_door and self.colliding_door.animation_started) \
-                or self.hero.status == "attack":
+        if self.check_level_finished():
             return
 
         keys = pygame.key.get_pressed()
@@ -327,11 +336,9 @@ class Level:
         self.hero.update()
         self.screen.blit(self.hero.image, self.camera.apply(self.hero))
         self.cannon_ball_hero_collision()
-        if self.hero.status != 'attack':
-            self.vertical_move()
+        self.vertical_move()
         if not self.viewing_final_menu and not self.hero.status == "die":
-            if self.hero.status != "attack":
-                self.horizontal_move()
+            self.horizontal_move()
             self.pig_hero_collision()
             self.cannon_hero_collision()
             self.get_key_hold_event()

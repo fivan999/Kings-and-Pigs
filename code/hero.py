@@ -44,16 +44,15 @@ class Hero(pygame.sprite.Sprite):
 
     # атака
     def attack(self):
-        if self.on_ground and self.status == "idle":
-            self.status = "attack"
-            self.image_index = 0
-            if self.facing_right:
-                self.attack_rect = pygame.Rect((self.terrain_collision_rect.left + 49, self.terrain_collision_rect.top),
-                                               (50, self.terrain_collision_rect.height))
-            else:
-                self.attack_rect = pygame.Rect((self.terrain_collision_rect.left - 49, self.terrain_collision_rect.top),
-                                               (50, self.terrain_collision_rect.height))
-            ATTACK_SOUND.play()
+        self.status = "attack"
+        self.image_index = 0
+        if self.facing_right:
+            self.attack_rect = pygame.Rect((self.terrain_collision_rect.left + 49, self.terrain_collision_rect.top),
+                                           (50, self.terrain_collision_rect.height))
+        else:
+            self.attack_rect = pygame.Rect((self.terrain_collision_rect.left - 49, self.terrain_collision_rect.top),
+                                           (50, self.terrain_collision_rect.height))
+        ATTACK_SOUND.play()
 
     # прыжок
     def jump(self):
