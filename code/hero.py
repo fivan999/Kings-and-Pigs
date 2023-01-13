@@ -1,10 +1,11 @@
 import pygame
 from support import load_images
+from sounds import JUMP_SOUND, HERO_DAMAGE_SOUND, ATTACK_SOUND
 
 
 # игрок
 class Hero(pygame.sprite.Sprite):
-    def __init__(self, position):
+    def __init__(self, position: tuple):
         super().__init__()
         self.import_animation_images()  # загрузка всех картинок для анимации
         self.image_index = 0  # текущая картинка
@@ -15,7 +16,6 @@ class Hero(pygame.sprite.Sprite):
         self.terrain_collision_rect = pygame.Rect((self.rect.left + 24, self.rect.top), (50, self.rect.height))
         # для атаки нужен другой квадрат, так как атакуем мы только кувалдой
         self.attack_rect = None
-        self.attack_shift = 51  # картинка атаки шире обычной, поэтому для реалистичности мы ее сдвигаем
 
         # основные механики
         self.direction = pygame.math.Vector2(0, 0)  # направление игрока по x и y
@@ -24,7 +24,7 @@ class Hero(pygame.sprite.Sprite):
         self.jump_speed = -12  # скорость прыжка
         self.health = 3  # здоровье
         self.damage_time = 0  # время до получения следующего урона
-        self.fixed_height = 52  # высоты картинок разные, для камеры используем эту
+        self.invibility_index = 0  # определяет индекс эффекта невидимости
 
         # флаги
         self.status = "idle"  # текущее состояние (на месте, бег, прыжок, падение, атака)
@@ -33,13 +33,8 @@ class Hero(pygame.sprite.Sprite):
         self.finished_level = False  # закончил уровень
         self.died = False  # закончилась анимация смерти
 
-        # звуки
-        self.jump_sound = pygame.mixer.Sound("../sounds/hero/jump.mp3")
-        self.get_damage_sound = pygame.mixer.Sound("../sounds/hero/get_damage.mp3")
-        self.attack_sound = pygame.mixer.Sound("../sounds/hero/attack.mp3")
-
     # загрузка всех картинок для анимации
-    def import_animation_images(self):
+    def import_animation_images(self) -> None:
         self.animations = {"idle": list(), "jump": list(),
                            "run": list(), "fall": list(),
                            "attack": list(), "die": list()}
@@ -48,38 +43,36 @@ class Hero(pygame.sprite.Sprite):
             self.animations[condition] = load_images("../graphics/character/" + condition + '/')
 
     # атака
-    def attack(self):
-        if self.on_ground and self.status == "idle":
-            self.status = "attack"
-            self.image_index = 0
-            self.terrain_collision_rect.x += self.attack_shift
-            if self.facing_right:
-                self.attack_rect = pygame.Rect((self.rect.left + 74, self.rect.top), (36, self.rect.height))
-            else:
-                self.attack_rect = pygame.Rect(self.rect.topleft, (36, self.rect.height))
-            self.attack_sound.play()
+    def attack(self) -> None:
+        self.status = "attack"
+        self.image_index = 0
+        left_shift = 49 * int(self.facing_right)
+        self.attack_rect = pygame.Rect((self.terrain_collision_rect.left + left_shift, self.terrain_collision_rect.top),
+                                       (50, self.terrain_collision_rect.height))
+        ATTACK_SOUND.play()
 
     # прыжок
-    def jump(self):
+    def jump(self) -> None:
         self.direction.y = self.jump_speed
-        self.jump_sound.play()
+        JUMP_SOUND.play()
 
     # падение за счет гравитации
-    def use_gravity(self):
+    def use_gravity(self) -> None:
         self.direction.y += self.gravity
         self.terrain_collision_rect.y += self.direction.y
 
     # получение урона
-    def get_damage(self):
+    def get_damage(self) -> None:
         if not self.finished_level:
             self.damage_time = 2
             self.health = max(self.health - 1, 0)
             self.jump()
             self.direction.x = -1
-            self.get_damage_sound.play()
+            self.invisible_image_loops = 6
+            HERO_DAMAGE_SOUND.play()
 
     # обновление текущего состояния игрока
-    def get_status(self):
+    def get_status(self) -> None:
         if self.status in ("attack", "die"):
             return
 
@@ -97,22 +90,46 @@ class Hero(pygame.sprite.Sprite):
             self.status = "idle"
 
     # обновление времени до следующего получения урона
-    def pass_damage_time(self):
+    def pass_damage_time(self) -> None:
         self.damage_time = max(self.damage_time - 0.02, 0)
+        self.make_invivible()
 
-    # переворачиваем, если смотрит влево
-    def update_rect(self):
+    # изменяем невидимость игрока
+    def make_invivible(self) -> None:
+        # если игрок получил урон и индекс невидидимости в нужном диапазоне, делаем игрока прозрачным
+        if self.invibility_index > 0 and self.damage_time > 0 and self.status != "die":
+            transparency = 70
+        else:
+            transparency = 255
+        self.image.set_alpha(transparency)
+
+        # изменяем индекс невидимости
+        self.invibility_index -= 1
+        if self.invibility_index <= -6:
+            self.invibility_index = 6
+
+    # обновляем положение игрока
+    def update_rect(self) -> None:
+        # у картинки атаки ширина больше, поэтому нужно располагать игрока по другому, если он атакует
         if self.facing_right:
-            self.rect.bottomright = self.terrain_collision_rect.bottomright
+            if self.status == "attack":
+                self.rect.bottomleft = self.terrain_collision_rect.bottomleft
+            else:
+                self.rect.bottomright = self.terrain_collision_rect.bottomright
         else:
             self.image = pygame.transform.flip(self.image, flip_x=True, flip_y=False)
-            self.rect.bottomleft = self.terrain_collision_rect.bottomleft
+            if self.status == "attack":
+                self.rect.bottomright = self.terrain_collision_rect.bottomright
+            else:
+                self.rect.bottomleft = self.terrain_collision_rect.bottomleft
+
+        # выравниваем
         self.rect = self.image.get_rect(midbottom=self.rect.midbottom)
         if self.status == "die":
             self.rect.top += 10
 
     # анимация
-    def animate(self):
+    def animate(self) -> None:
         self.get_status()
         animation = self.animations[self.status]
 
@@ -125,7 +142,6 @@ class Hero(pygame.sprite.Sprite):
                 self.status = None
                 self.get_status()
                 self.image_index = 0
-                self.terrain_collision_rect.x -= self.attack_shift
                 self.attack_rect = None
             elif self.status == "die":
                 self.died = True
@@ -136,10 +152,7 @@ class Hero(pygame.sprite.Sprite):
         self.image = animation[int(self.image_index)]
         self.update_rect()
 
-    def update(self):
-        self.pass_damage_time()
+    # обновляем игрока
+    def update(self) -> None:
         self.animate()
-
-    # отрисовка игрока
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
+        self.pass_damage_time()

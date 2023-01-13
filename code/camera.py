@@ -3,7 +3,7 @@ from settings import SCREEN_SIZE
 
 
 class Camera:
-    def __init__(self, target, world_size):
+    def __init__(self, target: pygame.sprite.Sprite, world_size: tuple):
         self.world_size = world_size  # размер самой карты из Tiled
         self.target = target  # на что ориентируемся (игрок)
         self.camera = pygame.Vector2(0, 0)  # само смещение
@@ -14,11 +14,11 @@ class Camera:
         self.y_shift = max((SCREEN_SIZE[1] - self.world_size[1]) // 2, 0)
 
     # передвинуть объект target
-    def apply(self, target):
+    def apply(self, target: pygame.sprite.Sprite) -> pygame.Rect:
         return target.rect.move((self.camera.x, self.camera.y))
 
     # обновить смещение
-    def update(self):
+    def update(self) -> None:
         x = -self.target.rect.center[0] + SCREEN_SIZE[0] / 2
         y = -self.target.rect.center[1] + SCREEN_SIZE[1] / 2
         self.camera += (pygame.Vector2((x, y)) - self.camera) * 0.05

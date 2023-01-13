@@ -1,4 +1,4 @@
-from tile import StaticTile
+from tiles import StaticTile
 import pygame
 from support import load_images
 from settings import TILE_SIZE
@@ -8,7 +8,7 @@ class Door(StaticTile):
     path_closed = "../graphics/door/idle/closed.png"
     path_opened = "../graphics/door/idle/opened.png"
 
-    def __init__(self, position, is_final):
+    def __init__(self, position: tuple, is_final: bool):
         # подгружаем картинки для анимации в зависимости от вида двери (начальная или конечная)
         if is_final:
             img = pygame.image.load(Door.path_closed).convert_alpha()
@@ -31,7 +31,7 @@ class Door(StaticTile):
         self.rect.y -= self.image.get_height() - TILE_SIZE
 
     # начать анимацию
-    def start_animation(self):
+    def start_animation(self) -> None:
         if not self.animation_started:
             self.animation_started = True
             self.image_index = 0  # текущая картинка
@@ -40,14 +40,14 @@ class Door(StaticTile):
             self.sound.play()
 
     # сама анимация
-    def animate(self):
+    def animate(self) -> None:
         self.image_index = min(self.image_index + self.animation_speed,
                                len(self.images) - 1)
         if self.image_index == len(self.images) - 1:  # если картинка последняя
             self.finished_animation = True
         self.image = self.images[int(self.image_index)]
 
-    def update(self):
+    def update(self) -> None:
         if self.animation_started:
             self.animate()
         # если дверь начальная, нужно сразу начинать анимацию закрытия
