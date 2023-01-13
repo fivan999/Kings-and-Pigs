@@ -8,14 +8,14 @@ from sounds import MAIN_MENU_MUSIC, WIN_SOUND
 # предназначен для связи между уровнями и меню
 # ловит события и направляет их куда надо
 class Game:
-    def __init__(self, levels, screen):
+    def __init__(self, levels: list, screen: pygame.Surface):
         self.screen = screen
         self.levels = levels  # все уровни
         self.set_menu()
         self.played_win_sound = False  # был ли звук победы
 
     # установить состояние на главное меню
-    def set_menu(self):
+    def set_menu(self) -> None:
         self.cur_level = None
         self.cur_diamonds = 0  # текущее количество алмазов (для результата)
         self.cur_level_index = 0  # текущий индекс уровня
@@ -24,7 +24,7 @@ class Game:
         MAIN_MENU_MUSIC.play(-1)
 
     # создание и переключение уровней
-    def set_level(self):
+    def set_level(self) -> None:
         if self.cur_level:
             self.cur_diamonds = self.cur_level.cur_diamonds
         self.cur_level = Level(self.levels[self.cur_level_index], self.screen,
@@ -33,7 +33,7 @@ class Game:
         self.status = "level"
 
     # отлавливаем события от игрока
-    def get_event(self, event):
+    def get_event(self, event: pygame.event) -> None:
         if event.type == pygame.KEYDOWN:
             if self.status == "menu":
                 self.main_menu.get_event(event)  # событие идет в главное меню
@@ -43,7 +43,7 @@ class Game:
                 self.cur_level.get_key_press_event(event)
 
     # рендеринг игры в зависимости от текущего ее состояния
-    def render(self):
+    def render(self) -> None:
         if self.status == "level":
             self.cur_level.render()
             # если уровень не последний, переключаем на следующий

@@ -8,7 +8,7 @@ from game_data import levels
 # базовая инициализация pygame
 def main():
     pygame.init()
-    pygame.display.set_caption("Kings and Pigs")
+    pygame.display.set_caption("Kings and pigs")
 
     screen = pygame.display.set_mode(SCREEN_SIZE)
 

@@ -1,6 +1,6 @@
 import pygame
 from random import randint
-from tile import StaticTile
+from tiles import StaticTile
 from settings import TILE_SIZE
 from support import load_images
 
@@ -8,7 +8,7 @@ from support import load_images
 class Cannon(StaticTile):
     path = "../graphics/cannon/idle/idle.png"
 
-    def __init__(self, position):
+    def __init__(self, position: tuple):
         super().__init__(position, pygame.image.load(Cannon.path).convert_alpha())
         self.idle_image = pygame.Surface((self.image.get_width(), self.image.get_height()),
                                          pygame.SRCALPHA)  # картинка для не стреляющей пушки
@@ -25,7 +25,7 @@ class Cannon(StaticTile):
         self.rect.x += TILE_SIZE - self.image.get_width()
 
     # начинаем анимацию выстрела
-    def start_animation(self):
+    def start_animation(self) -> None:
         if not self.animation_started:
             self.animation_started = True
             self.shot = False
@@ -34,7 +34,7 @@ class Cannon(StaticTile):
             self.image = self.images[self.image_index]
 
     # сама анимация
-    def animate(self):
+    def animate(self) -> None:
         self.image_index = min(self.image_index + self.animation_speed,
                                len(self.images) - 1)
 
@@ -49,12 +49,12 @@ class Cannon(StaticTile):
             self.image = self.images[int(self.image_index)]
 
     # обновляем время до выстрела
-    def pass_shoot_time(self):
+    def pass_shoot_time(self) -> None:
         self.time_before_shoot = max(self.time_before_shoot - self.speed_shoot_time, 0)
         if self.time_before_shoot == 0:
             self.start_animation()
 
-    def update(self):
+    def update(self) -> None:
         self.pass_shoot_time()
         if self.animation_started:
             self.animate()
@@ -63,13 +63,13 @@ class Cannon(StaticTile):
 class CannonBall(StaticTile):
     path = "../graphics/cannon/ball.png"
 
-    def __init__(self, position):
+    def __init__(self, position: tuple):
         super().__init__(position, pygame.image.load(CannonBall.path).convert_alpha())
         self.speed = randint(8, 14)  # скорость летящего шара
 
     # двигаем шар
-    def move(self):
+    def move(self) -> None:
         self.rect.x -= self.speed
 
-    def update(self):
+    def update(self) -> None:
         self.move()

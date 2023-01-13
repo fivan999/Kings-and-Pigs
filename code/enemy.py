@@ -1,12 +1,14 @@
 import pygame
 from random import randint
-from tile import AnimatedTile
+from tiles import AnimatedTile
 from settings import TILE_SIZE
 
 
 class Pig(AnimatedTile):
-    def __init__(self, position):
-        super().__init__(position, "../graphics/enemies/run/")
+    path = "../graphics/enemies/run/"
+
+    def __init__(self, position: tuple):
+        super().__init__(position, Pig.path)
         # зададим позицию врага
         self.rect = self.image.get_rect(topleft=position)
         self.rect.y += TILE_SIZE - self.image.get_height() - 2
@@ -16,15 +18,15 @@ class Pig(AnimatedTile):
         self.back_move = False  # если враг направлен вправо
 
     # разворот
-    def reverse(self):
+    def reverse(self) -> None:
         self.direction *= -1
         self.back_move = not self.back_move
 
     # перемещение врага
-    def move(self):
+    def move(self) -> None:
         self.rect.x += self.direction * self.speed
 
-    def update(self):
+    def update(self) -> None:
         super().update()
         if self.back_move:  # переворачиваем, если враг направлен вправо
             self.image = pygame.transform.flip(self.image, flip_x=True, flip_y=False)

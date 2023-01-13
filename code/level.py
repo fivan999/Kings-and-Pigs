@@ -1,7 +1,8 @@
 import pygame
 from random import randint, choice
 from settings import TILE_SIZE
-from tile import Tile, StaticTile, Diamond, Box
+from tiles import Tile, StaticTile
+from stuff_tiles import Diamond, Box
 from hero import Hero
 from support import import_csv, cut_images
 from enemy import Pig
@@ -13,12 +14,13 @@ from effects import EnemyDestroyEffect, BombExplosionEffect
 from menu import WinLoseMenu, PauseMenu
 from sounds import (DIAMOND_SOUND, PIG_DIE_SOUND, PIG_SAY_SOUND,
                     CANNON_SHOT_SOUND, BOMB_BOOM_SOUND, LOSE_SOUND)
+from typing import Callable
 
 
 # класс уровня
 # тут происходит обработка всех событий от игрока, если находится в уровне
 class Level:
-    def __init__(self, level, screen, set_main_menu, cur_diamonds):
+    def __init__(self, level: dict, screen: pygame.Surface, set_main_menu: Callable, cur_diamonds: Callable):
         self.screen = screen
         self.ui = UI(self.screen)  # отображение здоровья и алмазов
         self.total_pigs = 0  # количество свиней в уровне
@@ -38,7 +40,7 @@ class Level:
         self.finished_level = False  # финальная дверь закончила открываться
 
     # загрузка всех спрайтов
-    def setup_level(self, level):
+    def setup_level(self, level: dict) -> None:
         self.hero = None
         self.create_tile_group(import_csv(level["hero"]), "hero")
         self.terrain_sprites = self.create_tile_group(import_csv(level["terrain"]),
@@ -65,7 +67,7 @@ class Level:
         self.effects_sprites = pygame.sprite.Group()
 
     # возвращает все спрайты, нужно для фокусирования камеры
-    def get_all_sprites(self):
+    def get_all_sprites(self) -> list[pygame.sprite.Sprite]:
         return self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
             self.decoration_sprites.sprites() + self.box_sprites.sprites() + self.diamond_sprites.sprites() + \
             self.platform_sprites.sprites() + self.start_door_sprite.sprites() + \
@@ -74,7 +76,7 @@ class Level:
 
     # нарезает спрайты из картинок
     @staticmethod
-    def define_tile_type(graphics_type):
+    def define_tile_type(graphics_type) -> list[pygame.Surface]:
         tiles = list()
 
         if graphics_type == "terrain" or graphics_type == "background":
@@ -87,7 +89,7 @@ class Level:
         return tiles
 
     # создание отдельной группы спрайтов
-    def create_tile_group(self, csv_data, graphics_type):
+    def create_tile_group(self, csv_data: list, graphics_type: str) -> pygame.sprite.Group:
         sprite_group = pygame.sprite.Group()
         tiles = self.define_tile_type(graphics_type)
 
@@ -98,7 +100,6 @@ class Level:
                 x, y = col_ind * TILE_SIZE, row_ind * TILE_SIZE  # позиция клетки
                 if graphics_type == "hero":
                     self.hero = Hero((x, y))
-                    return
                 elif graphics_type == "box":  # коробка
                     sprite_group.add(Box((x, y)))
                 elif graphics_type == "diamonds":  # алмаз
@@ -123,31 +124,31 @@ class Level:
         return sprite_group
 
     # уничтожаем свинью со спрайтом pig
-    def kill_pig(self, pig):
+    def kill_pig(self, pig: pygame.sprite.Sprite) -> None:
         self.cnt_killed_pigs += 1
         self.effects_sprites.add(EnemyDestroyEffect(pig.rect.bottomleft))
         PIG_DIE_SOUND.play()
         pig.kill()
 
     # уничтожаем пушку или пушечный шар
-    def kill_cannon_or_ball(self, sprite):
+    def kill_cannon_or_ball(self, sprite: pygame.sprite.Sprite) -> None:
         self.effects_sprites.add(BombExplosionEffect(sprite.rect.center))
         BOMB_BOOM_SOUND.play()
         sprite.kill()
 
     # прыгает ли игрок на спрайт
-    def check_jump_destruction(self, sprite):
+    def check_jump_destruction(self, sprite: pygame.sprite.Sprite) -> None:
         return sprite.rect.top < self.hero.terrain_collision_rect.bottom <= sprite.rect.bottom \
                and self.hero.direction.y > 4
 
     # столкновение врагов с блоками-ограничителями движения
-    def enemy_block_collision(self):
+    def enemy_block_collision(self) -> None:
         for enemy in self.enemies_sprites.sprites():
             if pygame.sprite.spritecollide(enemy, self.enemy_block, dokill=False):
                 enemy.reverse()  # разворачиваем врага
 
     # столкновение игрока со свиньей
-    def pig_hero_collision(self):
+    def pig_hero_collision(self) -> None:
         hero = self.hero
 
         for pig in self.enemies_sprites.sprites():
@@ -161,7 +162,7 @@ class Level:
                     hero.get_damage()
 
     # столкновение игрока с пушкой
-    def cannon_hero_collision(self):
+    def cannon_hero_collision(self) -> None:
         hero = self.hero
 
         for cannon in self.cannon_sprites.sprites():
@@ -174,7 +175,7 @@ class Level:
 
     # столкновение игрока и шара от пушки
     # или столкновение шара от пушки и стены
-    def cannon_ball_hero_collision(self):
+    def cannon_ball_hero_collision(self) -> None:
         if self.finished_level:  # если игрок дошел до конца уровня, больше не проверяем
             return
 
@@ -189,14 +190,14 @@ class Level:
                 self.kill_cannon_or_ball(ball)
 
     # игрок находится рядом с финальной дверью
-    def door_collision(self):
+    def door_collision(self) -> None:
         if pygame.sprite.spritecollide(self.hero, self.final_door_sprite, dokill=False):
             self.colliding_door = self.final_door_sprite.sprites()[0]
         else:
             self.colliding_door = False
 
     # игрок собирает алмазы
-    def diamond_collision(self):
+    def diamond_collision(self) -> None:
         hero = self.hero
 
         for diamond in self.diamond_sprites.sprites():
@@ -206,7 +207,7 @@ class Level:
                 DIAMOND_SOUND.play()
 
     # проверка, стреляет ли пушка
-    def check_cannon_shoot(self):
+    def check_cannon_shoot(self) -> None:
         for cannon in self.cannon_sprites.sprites():
             if int(cannon.image_index) == 2 and not cannon.shot:
                 # если сейчас нужный нам индекс анимации, и пушка еще не стреляла на текущей анимации
@@ -216,7 +217,7 @@ class Level:
                 CANNON_SHOT_SOUND.play()
 
     # проверка, прошел ли игрок уровень
-    def check_win(self):
+    def check_win(self) -> None:
         # если игрок рядом с дверью и дверь открыта
         self.finished_level = self.colliding_door and self.colliding_door.finished_animation
         # если игрок прошел игру (последний уровень завершен)
@@ -225,7 +226,7 @@ class Level:
             self.viewing_final_menu = True
 
     # если игрок умер
-    def check_lose(self):
+    def check_lose(self) -> None:
         if self.hero.health == 0 and self.hero.died and not self.viewing_final_menu:
             self.level_menu = WinLoseMenu(self.screen, "lose", self.set_main_menu, self.cur_diamonds)
             self.viewing_final_menu = True
@@ -233,19 +234,19 @@ class Level:
             LOSE_SOUND.play()
 
     # фокусировка камеры
-    def draw_by_camera(self, group):
+    def draw_by_camera(self, group: pygame.sprite.Group) -> None:
         for sprite in group.sprites():
             self.screen.blit(sprite.image, self.camera.apply(sprite))
 
     # хрюканье свиньи
-    def make_pig_sound(self):
+    def make_pig_sound(self) -> None:
         chance = 70
         cnt_enemies = self.total_pigs - self.cnt_killed_pigs
         if cnt_enemies and randint(1, chance // cnt_enemies) == 3:
             choice(PIG_SAY_SOUND).play()
 
     # движение игрока по горизонтали
-    def horizontal_move(self):
+    def horizontal_move(self) -> None:
         hero = self.hero
         tiles_groups = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
         delta_x = hero.direction.x * hero.speed
@@ -263,7 +264,7 @@ class Level:
                     hero.on_right = True
 
     # движение игрока по вертикали
-    def vertical_move(self):
+    def vertical_move(self) -> None:
         hero = self.hero
         tiles_groups = self.terrain_sprites.sprites() + self.box_sprites.sprites() + self.platform_sprites.sprites()
         hero.use_gravity()
@@ -282,13 +283,13 @@ class Level:
             hero.on_ground = False
 
     # состояния, когда игрок уже не может контролировать героя
-    def check_level_finished(self):
+    def check_level_finished(self) -> bool:
         return self.finished_level or self.viewing_final_menu or self.paused or \
                (self.colliding_door and self.colliding_door.animation_started) or \
                self.hero.status == "die"
 
     # отлавливаем нажатия клавиш
-    def get_key_press_event(self, event):
+    def get_key_press_event(self, event: pygame.event) -> None:
         if self.check_level_finished():
             return
 
@@ -304,7 +305,7 @@ class Level:
             self.set_pause()
 
     # отлавливаем события с зажатой клавишей
-    def get_key_hold_event(self):
+    def get_key_hold_event(self) -> None:
         if self.check_level_finished():
             return
 
@@ -324,13 +325,13 @@ class Level:
             self.hero.jump()
 
     # ставим игру на паузу
-    def set_pause(self):
+    def set_pause(self) -> None:
         self.paused = not self.paused
         if self.paused:
             self.level_menu = PauseMenu(self.screen, self.set_pause, self.set_main_menu)
 
     # обновляем игрока
-    def update_hero(self):
+    def update_hero(self) -> None:
         self.check_lose()
         self.check_win()
         self.hero.update()
@@ -346,13 +347,13 @@ class Level:
             self.door_collision()
 
     # обновляем отображение здоровья и алмазов
-    def update_ui(self):
+    def update_ui(self) -> None:
         self.ui.render_health(self.hero.health)
         self.ui.render_text()
         self.ui.render_diamonds(self.cur_diamonds)
 
     # обновление и отрисовка всех спрайтов
-    def render_level_events(self):
+    def render_level_events(self) -> None:
         self.screen.fill((63, 56, 81))
         self.camera.update()
 
@@ -402,7 +403,7 @@ class Level:
         self.update_ui()
 
     # рендеринг уровня в зависимости от состояния
-    def render(self):
+    def render(self) -> None:
         if not self.paused:
             self.render_level_events()
             if self.viewing_final_menu:
