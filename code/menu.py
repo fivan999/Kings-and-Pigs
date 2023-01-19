@@ -2,6 +2,7 @@ import sys
 import pygame
 from settings import SCREEN_SIZE
 from typing import Callable
+from support import make_path
 
 
 class MenuBackground(pygame.sprite.Sprite):
@@ -44,8 +45,8 @@ class BaseMenu:
         self.callbacks = list()  # функции для ответа на эвенты
         self.options = list()  # варианты выбора
         self.option_index = 0  # индекс текущей кнопки
-        self.big_font = pygame.font.Font("../fonts/ARCADEPI.TTF", 40)
-        self.small_font = pygame.font.Font("../fonts/ARCADEPI.TTF", 28)
+        self.big_font = pygame.font.Font(make_path("../fonts/ARCADEPI.TTF"), 40)
+        self.small_font = pygame.font.Font(make_path("../fonts/ARCADEPI.TTF"), 28)
 
     # ловим евенты от менюшки
     def get_event(self, event: pygame.event) -> None:
@@ -80,9 +81,11 @@ class BaseMenu:
 
 # главное меню, при вхоже в игру
 class MainMenu(BaseMenu):
+    menu_image = make_path("../graphics/menu/menu_images/main_menu.png")
+    logo_image = make_path("../graphics/menu/logos/big_logo.png")
+
     def __init__(self, screen: pygame.Surface):
-        super().__init__(MenuBackground((0, 0), pygame.image.load("../graphics/menu/menu_imag"
-                                                                  "es/main_menu.png").convert_alpha()),
+        super().__init__(MenuBackground((0, 0), pygame.image.load(MainMenu.menu_image).convert_alpha()),
                          screen)
         self.game_started = False  # началась ли игра
         self.setup_menu()
@@ -90,7 +93,7 @@ class MainMenu(BaseMenu):
 
     # создание кнопок и надписей
     def setup_menu(self) -> None:
-        logo_image = pygame.image.load("../graphics/menu/logos/big_logo.png")
+        logo_image = pygame.image.load(MainMenu.logo_image).convert_alpha()
         self.logo = MenuBackground((SCREEN_SIZE[0] // 2 - logo_image.get_width() // 2, self.background.rect.top + 170),
                                    logo_image)  # логотип игры
 
@@ -112,11 +115,14 @@ class MainMenu(BaseMenu):
 
 
 class WinLoseMenu(BaseMenu):
+    win_menu_image = make_path("../graphics/menu/menu_images/win_menu.png")
+    lose_menu_image = make_path("../graphics/menu/menu_images/lose_menu.png")
+
     def __init__(self, screen: pygame.Surface, status: str, set_main_menu: Callable, total_diamonds: int):
         if status == "win":
-            menu_image = pygame.image.load("../graphics/menu/menu_images/win_menu.png")
+            menu_image = pygame.image.load(WinLoseMenu.win_menu_image)
         else:
-            menu_image = pygame.image.load("../graphics/menu/menu_images/lose_menu.png")
+            menu_image = pygame.image.load(WinLoseMenu.lose_menu_image)
         super().__init__(MenuBackground((0, 0), menu_image.convert_alpha()),
                          screen)
         self.total_diamonds = total_diamonds
@@ -146,9 +152,10 @@ class WinLoseMenu(BaseMenu):
 
 
 class PauseMenu(BaseMenu):
+    menu_image = make_path("../graphics/menu/menu_images/pause_menu.png")
+
     def __init__(self, screen: pygame.Surface, set_pause: Callable, set_main_menu: Callable):
-        super().__init__(MenuBackground((0, 0), pygame.image.load("../graphics/menu/menu_ima"
-                                                                  "ges/pause_menu.png").convert_alpha()),
+        super().__init__(MenuBackground((0, 0), pygame.image.load(PauseMenu.menu_image).convert_alpha()),
                          screen)
         self.set_pause = set_pause  # функция для ставки игры на паузу
         self.set_main_menu = set_main_menu  # функция для перехода в главное меню

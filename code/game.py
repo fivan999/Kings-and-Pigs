@@ -2,13 +2,14 @@ import pygame
 from level import Level
 from menu import MainMenu
 from sounds import MAIN_MENU_MUSIC, WIN_SOUND
+from typing import List
 
 
 # основной игровой класс
 # предназначен для связи между уровнями и меню
 # ловит события и направляет их куда надо
 class Game:
-    def __init__(self, levels: list, screen: pygame.Surface):
+    def __init__(self, levels: List, screen: pygame.Surface):
         self.screen = screen
         self.levels = levels  # все уровни
         self.set_menu()

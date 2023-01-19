@@ -1,23 +1,23 @@
 from tiles import StaticTile
 import pygame
-from support import load_images
+from support import load_images, make_path
 from settings import TILE_SIZE
 
 
 class Door(StaticTile):
-    path_closed = "../graphics/door/idle/closed.png"
-    path_opened = "../graphics/door/idle/opened.png"
+    path_closed = make_path("../graphics/door/idle/closed.png")
+    path_opened = make_path("../graphics/door/idle/opened.png")
 
     def __init__(self, position: tuple, is_final: bool):
         # подгружаем картинки для анимации в зависимости от вида двери (начальная или конечная)
         if is_final:
             img = pygame.image.load(Door.path_closed).convert_alpha()
-            self.images = load_images("../graphics/door/opening/")
-            self.sound = pygame.mixer.Sound("../sounds/door/open.wav")
+            self.images = load_images(make_path("../graphics/door/opening/"))
+            self.sound = pygame.mixer.Sound(make_path("../sounds/door/open.wav"))
         else:
             img = pygame.image.load(Door.path_opened).convert_alpha()
-            self.images = load_images("../graphics/door/closing/")
-            self.sound = pygame.mixer.Sound("../sounds/door/close.wav")
+            self.images = load_images(make_path("../graphics/door/closing/"))
+            self.sound = pygame.mixer.Sound(make_path("../sounds/door/close.wav"))
 
         super().__init__(position, img)
         self.is_final = is_final

@@ -2,11 +2,11 @@ import pygame
 from random import randint
 from tiles import StaticTile
 from settings import TILE_SIZE
-from support import load_images
+from support import load_images, make_path
 
 
 class Cannon(StaticTile):
-    path = "../graphics/cannon/idle/idle.png"
+    path = make_path("../graphics/cannon/idle/idle.png")
 
     def __init__(self, position: tuple):
         super().__init__(position, pygame.image.load(Cannon.path).convert_alpha())
@@ -18,7 +18,7 @@ class Cannon(StaticTile):
         self.speed_shoot_time = 0.03  # скорость
         self.animation_started = False  # началась ли анимация
         self.shot = False  # произошел ли выстрел на текущей анимации
-        self.images = load_images("../graphics/cannon/shoot/")  # картинки для анимации
+        self.images = load_images(make_path("../graphics/cannon/shoot/"))  # картинки для анимации
 
         # немного изменим позицию
         self.rect.y += TILE_SIZE - self.image.get_height()
@@ -61,7 +61,7 @@ class Cannon(StaticTile):
 
 
 class CannonBall(StaticTile):
-    path = "../graphics/cannon/ball.png"
+    path = make_path("../graphics/cannon/ball.png")
 
     def __init__(self, position: tuple):
         super().__init__(position, pygame.image.load(CannonBall.path).convert_alpha())

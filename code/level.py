@@ -4,7 +4,7 @@ from settings import TILE_SIZE
 from tiles import Tile, StaticTile
 from stuff_tiles import Diamond, Box
 from hero import Hero
-from support import import_csv, cut_images
+from support import import_csv, cut_images, make_path
 from enemy import Pig
 from camera import Camera
 from ui import UI
@@ -14,7 +14,7 @@ from effects import EnemyDestroyEffect, BombExplosionEffect
 from menu import WinLoseMenu, PauseMenu
 from sounds import (DIAMOND_SOUND, PIG_DIE_SOUND, PIG_SAY_SOUND,
                     CANNON_SHOT_SOUND, BOMB_BOOM_SOUND, LOSE_SOUND)
-from typing import Callable
+from typing import Callable, List
 
 
 # класс уровня
@@ -24,7 +24,8 @@ class Level:
         self.screen = screen
         self.ui = UI(self.screen)  # отображение здоровья и алмазов
         self.total_pigs = 0  # количество свиней в уровне
-        self.setup_level(level)
+        self.level = level  # словарь с данными об уровне
+        self.setup_level()
         self.camera = Camera(self.hero, level["size"])  # камера, которая следит за игроком
 
         # функция для установки главного меню, передается от класса Game при инициализации уровня
@@ -40,34 +41,26 @@ class Level:
         self.finished_level = False  # финальная дверь закончила открываться
 
     # загрузка всех спрайтов
-    def setup_level(self, level: dict) -> None:
+    def setup_level(self) -> None:
         self.hero = None
-        self.create_tile_group(import_csv(level["hero"]), "hero")
-        self.terrain_sprites = self.create_tile_group(import_csv(level["terrain"]),
-                                                      "terrain")
-        self.background_sprites = self.create_tile_group(import_csv(level["background"]),
-                                                         "background")
-        self.decoration_sprites = self.create_tile_group(import_csv(level["decorations"]),
-                                                         "decorations")
-        self.box_sprites = self.create_tile_group(import_csv(level["box"]), "box")
-        self.diamond_sprites = self.create_tile_group(import_csv(level["diamonds"]),
-                                                      "diamonds")
-        self.platform_sprites = self.create_tile_group(import_csv(level["default_platforms"]),
-                                                       "default_platforms")
-        self.start_door_sprite = self.create_tile_group(import_csv(level["start_door"]),
-                                                        "start_door")
-        self.final_door_sprite = self.create_tile_group(import_csv(level["final_door"]),
-                                                        "final_door")
+        self.create_tile_group("hero")
+
+        self.terrain_sprites = self.create_tile_group("terrain")
+        self.background_sprites = self.create_tile_group("background")
+        self.decoration_sprites = self.create_tile_group("decorations")
+        self.box_sprites = self.create_tile_group("box")
+        self.diamond_sprites = self.create_tile_group("diamonds")
+        self.platform_sprites = self.create_tile_group("default_platforms")
+        self.start_door_sprite = self.create_tile_group("start_door")
+        self.final_door_sprite = self.create_tile_group("final_door")
         self.enemy_block = pygame.sprite.Group()
-        self.enemies_sprites = self.create_tile_group(import_csv(level["pigs"]),
-                                                      "pigs")
+        self.enemies_sprites = self.create_tile_group("pigs")
         self.cannon_balls_sprites = pygame.sprite.Group()
-        self.cannon_sprites = self.create_tile_group(import_csv(level["cannon"]),
-                                                     "cannon")
+        self.cannon_sprites = self.create_tile_group("cannon")
         self.effects_sprites = pygame.sprite.Group()
 
     # возвращает все спрайты, нужно для фокусирования камеры
-    def get_all_sprites(self) -> list[pygame.sprite.Sprite]:
+    def get_all_sprites(self) -> List[pygame.sprite.Sprite]:
         return self.terrain_sprites.sprites() + self.background_sprites.sprites() + \
             self.decoration_sprites.sprites() + self.box_sprites.sprites() + self.diamond_sprites.sprites() + \
             self.platform_sprites.sprites() + self.start_door_sprite.sprites() + \
@@ -76,22 +69,23 @@ class Level:
 
     # нарезает спрайты из картинок
     @staticmethod
-    def define_tile_type(graphics_type) -> list[pygame.Surface]:
+    def define_tile_type(graphics_type: str) -> List[pygame.Surface]:
         tiles = list()
 
         if graphics_type == "terrain" or graphics_type == "background":
-            tiles = cut_images("../graphics/terrain/terrain.png")
+            tiles = cut_images(make_path("../graphics/terrain/terrain.png"))
         elif graphics_type == "decorations":
-            tiles = cut_images("../graphics/decorations/decorations.png")
+            tiles = cut_images(make_path("../graphics/decorations/decorations.png"))
         elif graphics_type == "default_platforms":
-            tiles = cut_images("../graphics/decorations/default_platforms.png", y_size=30)
+            tiles = cut_images(make_path("../graphics/decorations/default_platforms.png"), y_size=30)
 
         return tiles
 
     # создание отдельной группы спрайтов
-    def create_tile_group(self, csv_data: list, graphics_type: str) -> pygame.sprite.Group:
+    def create_tile_group(self, graphics_type: str) -> pygame.sprite.Group:
         sprite_group = pygame.sprite.Group()
         tiles = self.define_tile_type(graphics_type)
+        csv_data = import_csv(make_path(self.level[graphics_type]))
 
         for row_ind, row in enumerate(csv_data):
             for col_ind, col in enumerate(row):

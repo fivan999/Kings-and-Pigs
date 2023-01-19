@@ -1,5 +1,5 @@
 import pygame
-from support import load_images
+from support import load_images, make_path
 
 
 # базовый эффект, уничтожающийся после окончания анимации
@@ -26,7 +26,7 @@ class BaseEffect(pygame.sprite.Sprite):
 
 
 class EnemyDestroyEffect(BaseEffect):
-    path = '../graphics/enemies/die/'
+    path = make_path('../graphics/enemies/die/')
 
     def __init__(self, position: tuple):
         super().__init__(position, EnemyDestroyEffect.path)
@@ -36,7 +36,7 @@ class EnemyDestroyEffect(BaseEffect):
 
 
 class BombExplosionEffect(BaseEffect):
-    path = "../graphics/explosion/bomb/"
+    path = make_path("../graphics/explosion/bomb/")
 
     def __init__(self, position: tuple):
         super().__init__(position, BombExplosionEffect.path)

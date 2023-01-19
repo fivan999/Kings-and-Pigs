@@ -1,5 +1,5 @@
 import pygame
-from support import load_images
+from support import load_images, make_path
 from sounds import JUMP_SOUND, HERO_DAMAGE_SOUND, ATTACK_SOUND
 
 
@@ -40,7 +40,7 @@ class Hero(pygame.sprite.Sprite):
                            "attack": list(), "die": list()}
 
         for condition in self.animations:
-            self.animations[condition] = load_images("../graphics/character/" + condition + '/')
+            self.animations[condition] = load_images(make_path("../graphics/character/" + condition + '/'))
 
     # атака
     def attack(self) -> None:

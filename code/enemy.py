@@ -2,10 +2,11 @@ import pygame
 from random import randint
 from tiles import AnimatedTile
 from settings import TILE_SIZE
+from support import make_path
 
 
 class Pig(AnimatedTile):
-    path = "../graphics/enemies/run/"
+    path = make_path("../graphics/enemies/run/")
 
     def __init__(self, position: tuple):
         super().__init__(position, Pig.path)

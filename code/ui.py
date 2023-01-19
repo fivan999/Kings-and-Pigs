@@ -1,19 +1,24 @@
 import pygame
 from settings import SCREEN_SIZE
+from support import make_path
 
 
 class UI:
+    health_bar_image = make_path('../graphics/health and diamonds/bar.png')
+    heart_image = make_path("../graphics/health and diamonds/heart.png")
+    num_bar_image = make_path('../graphics/health and diamonds/num_bar.png')
+
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
 
         # для отображения здоровья
-        self.health_bar = pygame.image.load('../graphics/health and diamonds/bar.png').convert_alpha()
-        self.heart = pygame.image.load('../graphics/health and diamonds/heart.png').convert_alpha()
+        self.health_bar = pygame.image.load(UI.health_bar_image).convert_alpha()
+        self.heart = pygame.image.load(UI.heart_image).convert_alpha()
         self.heart_pos = 56, 48
 
         # для отображения алмазов
-        self.font = pygame.font.Font('../fonts/ARCADEPI.TTF', 26)
-        self.numbers_bar = pygame.image.load('../graphics/health and diamonds/num_bar.png').convert_alpha()
+        self.font = pygame.font.Font(make_path('../fonts/ARCADEPI.TTF'), 26)
+        self.numbers_bar = pygame.image.load(UI.num_bar_image).convert_alpha()
         self.numbers_pos = SCREEN_SIZE[0] - 150, 20
 
         # для отображения текста

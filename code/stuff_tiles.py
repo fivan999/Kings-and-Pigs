@@ -1,10 +1,11 @@
 import pygame
 from tiles import StaticTile, AnimatedTile
 from settings import TILE_SIZE
+from support import make_path
 
 
 class Diamond(AnimatedTile):
-    path = "../graphics/stuff/animate_diamonds/"
+    path = make_path("../graphics/stuff/animate_diamonds/")
 
     def __init__(self, position: tuple):
         super().__init__(position, Diamond.path)
@@ -15,7 +16,7 @@ class Diamond(AnimatedTile):
 
 
 class Box(StaticTile):
-    path = "../graphics/decorations/box.png"
+    path = make_path("../graphics/decorations/box.png")
 
     def __init__(self, position: tuple):
         super().__init__(position, pygame.image.load(self.path).convert_alpha())
