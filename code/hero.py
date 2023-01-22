@@ -98,7 +98,7 @@ class Hero(pygame.sprite.Sprite):
     def make_invivible(self) -> None:
         # если игрок получил урон и индекс невидидимости в нужном диапазоне, делаем игрока прозрачным
         if self.invibility_index > 0 and self.damage_time > 0 and self.status != "die":
-            transparency = 70
+            transparency = 80
         else:
             transparency = 255
         self.image.set_alpha(transparency)

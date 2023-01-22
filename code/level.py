@@ -250,7 +250,7 @@ class Level:
 
         for tile in tiles_groups:
             if tile.rect.colliderect(hero.terrain_collision_rect):
-                if hero.direction.x < 0:  # если игрок столкнулся с чем то, пока шел влево
+                if hero.direction.x < 0:  # столкнулся, пока шел влево
                     hero.terrain_collision_rect.left = tile.rect.right
                     hero.on_left = True
                 elif hero.direction.x > 0:  # пока шел вправо
@@ -268,7 +268,7 @@ class Level:
                 if hero.direction.y > 0:  # столкнулся пока падал
                     hero.terrain_collision_rect.bottom = tile.rect.top
                     hero.on_ground = True
-                elif hero.direction.y < 0:  # столкнулся, пока был в прыжке
+                elif hero.direction.y < 0:  # пока был в прыжке
                     hero.terrain_collision_rect.top = tile.rect.bottom
                     hero.on_ground = False
                 hero.direction.y = 0

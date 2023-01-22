@@ -44,5 +44,6 @@ def cut_images(path: str, x_size: int = TILE_SIZE, y_size: int = TILE_SIZE) -> L
     return tiles
 
 
+# форматирование пути в зависимости от директории
 def make_path(to_convert: str) -> str:
     return os.path.join(os.path.dirname(__file__), to_convert)
